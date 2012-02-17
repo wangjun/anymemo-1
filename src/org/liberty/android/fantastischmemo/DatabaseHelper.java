@@ -226,6 +226,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		Cursor result;
 		int count_dict = 0, count_learn = 0;
 		myDatabase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+        if (myDatabase.getVersion() != 0) {
+            Cursor res = myDatabase.rawQuery("select name from sqlite_master where type = 'table' and name = 'dict_tbl'", null);
+            boolean isOldDatabase = res.getCount() > 0;
+            res.close();
+
+            if (!isOldDatabase) {
+                throw new SQLException("This database was created with 9.0 or later version of AnyMemo. Please download the latest version of AnyMemo");
+            }
+        }
         result = myDatabase.rawQuery("SELECT _id FROM dict_tbl", null);
         count_dict = result.getCount();
         result.close();
