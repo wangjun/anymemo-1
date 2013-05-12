@@ -32,9 +32,10 @@ import org.apache.mycommons.lang3.StringUtils;
 
 import org.liberty.android.fantastischmemo.AMActivity;
 import org.liberty.android.fantastischmemo.AMEnv;
+import org.liberty.android.fantastischmemo.AMPrefKeys;
 import org.liberty.android.fantastischmemo.R;
 
-import org.liberty.android.fantastischmemo.utils.AMUtil;
+import org.liberty.android.fantastischmemo.utils.AMFileUtil;
 import org.liberty.android.fantastischmemo.utils.RecentListUtil;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -86,6 +87,8 @@ public class FileBrowserFragment extends DialogFragment implements OnItemClickLi
     private SharedPreferences settings;
     private SharedPreferences.Editor editor;
 
+    private AMFileUtil amFileUtil;
+
     public void setOnFileClickListener(OnFileClickListener listener) {
         this.onFileClickListener = listener;
     }
@@ -96,6 +99,7 @@ public class FileBrowserFragment extends DialogFragment implements OnItemClickLi
         mActivity = (AMActivity)activity;
         settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
         editor = settings.edit();
+        amFileUtil = new AMFileUtil(mActivity);
     }
 
 
@@ -121,7 +125,7 @@ public class FileBrowserFragment extends DialogFragment implements OnItemClickLi
             defaultRoot = null;
         }
         if(defaultRoot == null){
-            defaultRoot = settings.getString("saved_fb_path", null);
+            defaultRoot = settings.getString(AMPrefKeys.SAVED_FILEBROWSER_PATH_KEY, null);
         }
 
 		if(StringUtils.isEmpty(defaultRoot)){
@@ -232,7 +236,7 @@ public class FileBrowserFragment extends DialogFragment implements OnItemClickLi
 					}
 					else if(clickedFile.isFile()){
                         /* Save the current path */
-                        editor.putString("saved_fb_path", clickedFile.getParent());
+                        editor.putString(AMPrefKeys.SAVED_FILEBROWSER_PATH_KEY, clickedFile.getParent());
                         editor.commit();
                         if (onFileClickListener != null) {
                             onFileClickListener.onClick(clickedFile);
@@ -298,7 +302,7 @@ public class FileBrowserFragment extends DialogFragment implements OnItemClickLi
                                             .setPositiveButton(getString(R.string.delete_text), new DialogInterface.OnClickListener(){
                                                 @Override
                                                 public void onClick(DialogInterface dialog, int which ){
-                                                    AMUtil.deleteDbSafe(clickedFile.getAbsolutePath());
+                                                    amFileUtil.deleteDbSafe(clickedFile.getAbsolutePath());
                                                     File dir = new File(clickedFile.getParent());
                                                     Log.v(TAG, "DIR: " + dir.toString());
                                                     browseTo(dir);
@@ -344,7 +348,7 @@ public class FileBrowserFragment extends DialogFragment implements OnItemClickLi
                                                 if(!value.equals(clickedFile.getAbsolutePath())){
                                                     try {
                                                         FileUtils.copyFile(clickedFile, new File(value));
-                                                        AMUtil.deleteDbSafe(clickedFile.getAbsolutePath());
+                                                        amFileUtil.deleteDbSafe(clickedFile.getAbsolutePath());
                                                         RecentListUtil rlu = new RecentListUtil(mActivity);
                                                         rlu.deleteFromRecentList(clickedFile.getAbsolutePath());
 
@@ -526,7 +530,7 @@ public class FileBrowserFragment extends DialogFragment implements OnItemClickLi
                 else if(name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".tif") || name.endsWith(".bmp")){
                     iv.setImageResource(R.drawable.picture);
                 }
-                else if(name.endsWith(".ogg") || name.endsWith(".mp3") || name.endsWith(".wav")){
+                else if(name.endsWith(".ogg") || name.endsWith(".mp3") || name.endsWith(".wav") || name.endsWith(".amr")){
                     iv.setImageResource(R.drawable.audio);
                 }
                 else if(name.endsWith(".txt") || name.endsWith(".csv") || name.endsWith(".xml")){

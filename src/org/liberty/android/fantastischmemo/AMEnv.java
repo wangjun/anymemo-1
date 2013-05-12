@@ -23,20 +23,31 @@ package org.liberty.android.fantastischmemo;
 import android.os.Environment;
 
 /*
- * Class that defines the contants that is used in AnyMemo.
+ * Class that defines the constants that is used in AnyMemo.
  */
 public class AMEnv {
     public static final String EXTERNAL_STORAGE_PATH = Environment.getExternalStorageDirectory().getAbsolutePath();
     private final static String DEFAULT_POSTFIX= "/anymemo/";
     private final static String DEFAULT_AUDIO_POSTFIX = "voice/";
     private final static String DEFAULT_IMAGE_POSTFIX = "images/";
+    private final static String DEFAULT_TMP_POSTFIX = "tmp/";
     public final static String DEFAULT_ROOT_PATH = EXTERNAL_STORAGE_PATH + DEFAULT_POSTFIX;
     public final static String DEFAULT_AUDIO_PATH = DEFAULT_ROOT_PATH + DEFAULT_AUDIO_POSTFIX;
     public final static String DEFAULT_IMAGE_PATH = DEFAULT_ROOT_PATH + DEFAULT_IMAGE_POSTFIX;
+    public final static String DEFAULT_TMP_PATH = DEFAULT_ROOT_PATH + DEFAULT_TMP_POSTFIX;
     public final static String DEFAULT_DB_NAME= "french-body-parts.db";
     public final static String EMPTY_DB_NAME= "empty.db";
     public final static String GOOGLE_CLIENT_ID = "45533559525.apps.googleusercontent.com";
     public final static String GOOGLE_CLIENT_SECRET = "74rz27lrTr9mWNnipgxXwtEd";
     public final static String GOOGLE_REDIRECT_URI = "http://localhost";
     public final static String GDRIVE_SCOPE ="https://docs.google.com/feeds/ https://docs.googleusercontent.com/ https://spreadsheets.google.com/feeds/";
+    
+    
+    // Dropbox oauth constants
+    public final static String DROPBOX_REDIRECT_URI = "https://localhost";
+    public final static String DROPBOX_CONSUMER_KEY = "q2rclqr44ux8pe7";
+    public final static String DROPBOX_CONSUMER_SECRET = "bmgikjefor073dh";
+    public final static String DROPBOX_OAUTH_VERSION = "1.0";
+    public final static String DROPBOX_OAUTH_SIGNATURE_METHOD="PLAINTEXT";
+
 }

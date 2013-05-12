@@ -19,42 +19,44 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 package org.liberty.android.fantastischmemo.downloader;
 
-import java.util.LinkedList;
-
-import org.liberty.android.fantastischmemo.*;
-
-import java.util.ArrayList;
-import java.util.List;
-
+import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.text.Format;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
+import org.apache.mycommons.io.FileUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.liberty.android.fantastischmemo.AMEnv;
+import org.liberty.android.fantastischmemo.AnyMemoDBOpenHelper;
+import org.liberty.android.fantastischmemo.AnyMemoDBOpenHelperManager;
+import org.liberty.android.fantastischmemo.R;
 import org.liberty.android.fantastischmemo.dao.CardDao;
-
 import org.liberty.android.fantastischmemo.domain.Card;
 import org.liberty.android.fantastischmemo.domain.Category;
 import org.liberty.android.fantastischmemo.domain.LearningData;
+import org.liberty.android.fantastischmemo.utils.AMFileUtil;
 import org.liberty.android.fantastischmemo.utils.AMGUIUtility;
-import org.liberty.android.fantastischmemo.utils.AMUtil;
 import org.liberty.android.fantastischmemo.utils.RecentListUtil;
 
-
-import android.os.Bundle;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.widget.AbsListView;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.util.Log;
-import android.view.View;
+import android.os.Bundle;
 import android.os.Handler;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
+import android.util.Log;
+import android.view.View;
+import android.widget.AbsListView;
+import android.widget.ListView;
+import android.widget.TextView;
 
 /*
  * Download from FlashcardExchange using its web api
@@ -66,9 +68,9 @@ public class DownloaderQuizlet extends DownloaderBase implements ListView.OnScro
     private static final String TAG = "org.liberty.android.fantastischmemo.downloader.DownloaderQuizlet";
     private static final int PAGE_SIZE = 50;
     private static final String QUIZLET_API_KEY = "7bmBY5S2VgPbNpd8";
-    private static final String QUIZLET_API_TAG = "http://api.quizlet.com/1.0/sets?dev_key=" + QUIZLET_API_KEY+ "&per_page=" + PAGE_SIZE + "&q=";
-    private static final String QUIZLET_API_USER = "http://api.quizlet.com/1.0/sets?dev_key=" + QUIZLET_API_KEY+ "&per_page=" + PAGE_SIZE + "&q=creator:";
-    private static final String QUIZLET_API_GET = "http://api.quizlet.com/1.0/sets?dev_key=" + QUIZLET_API_KEY+ "&extended=on&q=ids:";
+    private static final String QUIZLET_API_TAG = "https://api.quizlet.com/2.0/search/sets?client_id=" + QUIZLET_API_KEY+ "&per_page=" + PAGE_SIZE + "&q=";
+    private static final String QUIZLET_API_USER = "https://api.quizlet.com/2.0/users/%s/sets?client_id=" + QUIZLET_API_KEY+ "&per_page=" + PAGE_SIZE;
+    private static final String QUIZLET_API_GET = "https://api.quizlet.com/2.0/sets/%d?client_id=" + QUIZLET_API_KEY;
     private DownloadListAdapter dlAdapter;
 
     private ListView listView;
@@ -80,8 +82,14 @@ public class DownloaderQuizlet extends DownloaderBase implements ListView.OnScro
     /* This will change after first retriving list */
     private int totalPages = 1;
 
+    private AMFileUtil amFileUtil;
+
+    private DownloaderUtils downloaderUtils;
+
     @Override
     protected void initialRetrieve(){
+        amFileUtil = new AMFileUtil(this);
+        downloaderUtils = new DownloaderUtils(this);
         mHandler = new Handler();
         dlAdapter = new DownloadListAdapter(this, R.layout.filebrowser_item);
         listView = (ListView)findViewById(R.id.file_list);
@@ -191,35 +199,43 @@ public class DownloaderQuizlet extends DownloaderBase implements ListView.OnScro
         String url = "";
         if(action.equals(INTENT_ACTION_SEARCH_TAG)){
             url = QUIZLET_API_TAG + URLEncoder.encode(searchCriterion);
-        }
-        else if(action.equals(INTENT_ACTION_SEARCH_USER)){
-            url = QUIZLET_API_USER + URLEncoder.encode(searchCriterion);
-        }
-        else{
+        } else if (action.equals(INTENT_ACTION_SEARCH_USER)){
+            url = String.format(QUIZLET_API_USER, URLEncoder.encode(searchCriterion));
+        } else {
             throw new IOException("Incorrect criterion used for this call");
         }
         Log.i(TAG, "Url: " + url);
         url += "&page=" + currentPage;
 
-        String jsonString = DownloaderUtils.downloadJSONString(url);
+        String jsonString = downloaderUtils.downloadJSONString(url);
         Log.v(TAG, "JSON String: " + jsonString);
-        JSONObject jsonObject = new JSONObject(jsonString);
-        String status =  jsonObject.getString("response_type");
-        if(!status.equals("ok")){
-            throw new IOException("Status is not OK. Status: " + status);
+
+        // The array that stores the result
+        JSONArray jsonArray = null;
+        if (action.equals(INTENT_ACTION_SEARCH_TAG)) {
+            JSONObject jsonObject = new JSONObject(jsonString);
+            totalPages = jsonObject.getInt("total_pages");
+            jsonArray = jsonObject.getJSONArray("sets");
+        } else if(action.equals(INTENT_ACTION_SEARCH_USER)){
+            jsonArray = new JSONArray(jsonString);
         }
-        totalPages = jsonObject.getInt("total_pages");
-        JSONArray jsonArray = jsonObject.getJSONArray("sets");
         for(int i = 0; i < jsonArray.length(); i++){
             JSONObject jsonItem = jsonArray.getJSONObject(i);
             int cardId;
             cardId = jsonItem.getInt("id");
 
 
-            String address = QUIZLET_API_GET + cardId;
+            String address = String.format(QUIZLET_API_GET, cardId);
+            String description = new DescriptionBuilder(this)
+                .setCardCount(jsonItem.getInt("term_count"))
+                .setCreationDateUnixTime(jsonItem.getLong("created_date"))
+                .setDescription(jsonItem.getString("description"))
+                .setAuthor(jsonItem.getString("created_by"))
+                .build();
+
             DownloadItem di = new DownloadItem(DownloadItem.ItemType.Database,
                     jsonItem.getString("title"),
-                    "From Quizlet.com", 
+                    description, 
                     address);
             diList.add(di);
         }
@@ -228,33 +244,52 @@ public class DownloaderQuizlet extends DownloaderBase implements ListView.OnScro
 
     private void downloadDatabase(DownloadItem di) throws Exception{
         String address = di.getAddress();
-        String dbJsonString = DownloaderUtils.downloadJSONString(address);
+        String dbJsonString = downloaderUtils.downloadJSONString(address);
         Log.v(TAG, "Download url: " + address);
         JSONObject rootObject = new JSONObject(dbJsonString);
-        String status = rootObject.getString("response_type");
-        if(!status.equals("ok")){
-            Log.e(TAG, "Content: " + dbJsonString);
-            throw new IOException("Status is not OK. Status: " + status);
+        JSONArray flashcardsArray = rootObject.getJSONArray("terms");
+        int termCount = rootObject.getInt("term_count");
+        boolean hasImage = rootObject.getBoolean("has_images");
+        List<Card> cardList = new ArrayList<Card>(termCount);
+
+        // handle image
+        String dbname = downloaderUtils.validateDBName(di.getTitle()) + ".db";
+        String imagePath = AMEnv.DEFAULT_IMAGE_PATH + dbname + "/";
+        if (hasImage) {
+            FileUtils.forceMkdir(new File(imagePath));
         }
-        JSONArray flashcardsArray = rootObject.getJSONArray("sets").getJSONObject(0).getJSONArray("terms");
-        List<Card> cardList = new LinkedList<Card>();
+
+
         for(int i = 0; i < flashcardsArray.length(); i++){
-            JSONArray jsonItem = flashcardsArray.getJSONArray(i);
-            String question = jsonItem.getString(0);
-            String answer = jsonItem.getString(1);
+            JSONObject jsonItem = flashcardsArray.getJSONObject(i);
+            String question = jsonItem.getString("term");
+            String answer = jsonItem.getString("definition");
+
+            // Download images, ignore image downloading error.
+            try {
+                if (jsonItem.has("image") && !jsonItem.isNull("image") && hasImage) {
+                    JSONObject imageItem = jsonItem.getJSONObject("image");
+                    String imageUrl = imageItem.getString("url");
+                    String downloadFilename = AMFileUtil.getFilenameFromPath(imageUrl);
+                    downloaderUtils.downloadFile(imageUrl, imagePath + downloadFilename);
+                    answer += "<br /><img src=\"" + downloadFilename + "\"/>";
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Error downloading image.", e);
+            }
             Card card = new Card();
             card.setQuestion(question);
             card.setAnswer(answer);
             card.setCategory(new Category());
             card.setLearningData(new LearningData());
             cardList.add(card);
+
         }
         
         /* Make a valid dbname from the title */
-        String dbname = DownloaderUtils.validateDBName(di.getTitle()) + ".db";
         String dbpath = AMEnv.DEFAULT_ROOT_PATH;
         String fullpath = dbpath + dbname;
-        AMUtil.deleteFileWithBackup(fullpath);
+        amFileUtil.deleteFileWithBackup(fullpath);
         AnyMemoDBOpenHelper helper = AnyMemoDBOpenHelperManager.getHelper(DownloaderQuizlet.this, fullpath);
         try {
             CardDao cardDao = helper.getCardDao();
@@ -291,5 +326,58 @@ public class DownloaderQuizlet extends DownloaderBase implements ListView.OnScro
 
     @Override
     public void onScrollStateChanged(AbsListView view, int scrollState) {
+    }
+
+    private static class DescriptionBuilder {
+
+        private Context context;
+
+        private String author = "";
+
+        private String creationDateString = "";
+
+        private int cardCount = 0;
+
+        private String description = "";
+
+        public DescriptionBuilder(Context context) {
+            this.context = context;
+        }
+
+        public DescriptionBuilder setAuthor(String author) {
+            this.author = author;
+            return this;
+        }
+
+        public DescriptionBuilder setCreationDateUnixTime(long creationDate) {
+            Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            this.creationDateString = formatter.format(new Date(creationDate * 1000L));
+            return this;
+        }
+
+        public DescriptionBuilder setCardCount(int cardCount) {
+            this.cardCount = cardCount;
+            return this;
+        }
+
+        public DescriptionBuilder setDescription(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public String build() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("<br />");
+            sb.append(context.getString(R.string.author_text) + ": " + author + "<br />");
+
+
+            sb.append(context.getString(R.string.creation_date_text) + ": " + creationDateString + "<br />");
+            sb.append(context.getString(R.string.card_count_text) + ": " + cardCount + "<br /><br />");
+            sb.append(description);
+
+            return sb.toString();
+
+        }
+
     }
 }

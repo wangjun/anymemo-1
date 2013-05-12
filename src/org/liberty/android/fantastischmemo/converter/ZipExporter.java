@@ -24,13 +24,27 @@ import java.io.File;
 import org.liberty.android.fantastischmemo.utils.AMZipUtils;
 
 public class ZipExporter implements AbstractConverter {
+
+    private static final long serialVersionUID = -7316554160292269944L;
+
     /* 
      * Dest is not used, it is always in [external]/anymemo
      * directory
      */
 
-    public void convert(String src, String dest) throws Exception {
-		AMZipUtils.compressFile(new File(src), new File(dest));
 
+    public void convert(String src, String dest) throws Exception {
+        AMZipUtils.compressFile(new File(src), new File(dest));
+
+    }
+
+    @Override
+    public String getSrcExtension() {
+        return "db";
+    }
+
+    @Override
+    public String getDestExtension() {
+        return "zip";
     }
 }

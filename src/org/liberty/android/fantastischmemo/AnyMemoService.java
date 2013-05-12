@@ -23,8 +23,8 @@ package org.liberty.android.fantastischmemo;
 import org.liberty.android.fantastischmemo.dao.CardDao;
 
 import org.liberty.android.fantastischmemo.ui.AnyMemo;
-import org.liberty.android.fantastischmemo.ui.MemoScreen;
-import org.liberty.android.fantastischmemo.utils.AMUtil;
+import org.liberty.android.fantastischmemo.ui.StudyActivity;
+import org.liberty.android.fantastischmemo.utils.AMFileUtil;
 import org.liberty.android.fantastischmemo.utils.RecentListUtil;
 
 import android.app.PendingIntent;
@@ -121,7 +121,7 @@ public class AnyMemoService extends Service{
         }
         finally{
             /* Set on click event */
-            Intent intent = new Intent(this, MemoScreen.class);
+            Intent intent = new Intent(this, StudyActivity.class);
             RecentListUtil rlu = new RecentListUtil(this);
             intent.putExtra("dbpath", rlu.getRecentDBPath());
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -173,8 +173,8 @@ public class AnyMemoService extends Service{
         public DatabaseInfo(Context context) throws Exception{
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
             /* Feed the data from the most recent database */
-            dbPath = settings.getString("recentdbpath0", "");
-            dbName = AMUtil.getFilenameFromPath(dbPath);
+            dbPath = settings.getString(AMPrefKeys.getRecentPathKey(0), "");
+            dbName = AMFileUtil.getFilenameFromPath(dbPath);
 
             AnyMemoDBOpenHelper helper = AnyMemoDBOpenHelperManager.getHelper(AnyMemoService.this, dbPath);
             try {

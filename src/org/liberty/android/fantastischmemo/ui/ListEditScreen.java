@@ -21,13 +21,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 package org.liberty.android.fantastischmemo.ui;
 
 import org.liberty.android.fantastischmemo.AMActivity;
+import org.liberty.android.fantastischmemo.AMPrefKeys;
 import org.liberty.android.fantastischmemo.AnyMemoDBOpenHelper;
 import org.liberty.android.fantastischmemo.AnyMemoDBOpenHelperManager;
 import org.liberty.android.fantastischmemo.R;
 
 import org.liberty.android.fantastischmemo.dao.CardDao;
 import org.liberty.android.fantastischmemo.domain.Card;
-import org.liberty.android.fantastischmemo.domain.Option;
+import org.liberty.android.fantastischmemo.utils.AMPrefUtil;
 
 import android.app.Activity;
 
@@ -66,9 +67,9 @@ public class ListEditScreen extends AMActivity {
 
     private AnyMemoDBOpenHelper dbOpenHelper;
     
-    private Option option;
-
 	private ListView listView;
+	
+	private AMPrefUtil amPrefUtil;
 	
 	/* Initial position in the list */
 
@@ -79,8 +80,8 @@ public class ListEditScreen extends AMActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.list_edit_screen);
-		
-        option = new Option(this); 
+		        
+        amPrefUtil = new AMPrefUtil(this);
 
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
@@ -274,7 +275,7 @@ public class ListEditScreen extends AMActivity {
 
 		@Override
 		public void onPostExecute(Void result) {
-            int initPosition = option.getSavedId(TAG, dbPath, 0);
+            int initPosition = amPrefUtil.getSavedId(AMPrefKeys.LIST_EDIT_SCREEN_PREFIX, dbPath, 0);
 			mAdapter = new CardListAdapter(ListEditScreen.this, cards);
 					
 			listView = (ListView) findViewById(R.id.item_list);
@@ -290,7 +291,7 @@ public class ListEditScreen extends AMActivity {
 
     @Override
     public void onDestroy() {
-        option.setSavedId(TAG, dbPath, listView.getFirstVisiblePosition());
+        amPrefUtil.setSavedId(AMPrefKeys.LIST_EDIT_SCREEN_PREFIX, dbPath, listView.getFirstVisiblePosition());
         AnyMemoDBOpenHelperManager.releaseHelper(dbOpenHelper);
         super.onDestroy();
     }

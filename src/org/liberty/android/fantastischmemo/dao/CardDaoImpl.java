@@ -443,7 +443,16 @@ public class CardDaoImpl extends AbstractHelperDaoImpl<Card, Integer> implements
             callBatchTasks(new Callable<Void>() {
                 // Use the map to get rid of duplicate category creation
                 final Map<String, Category> categoryMap = new HashMap<String, Category>();
+
                 public Void call() throws Exception {
+                    List<Category> existingCategories = categoryDao.queryForAll();
+
+                    for (Category c : existingCategories) {
+                        assert c != null : "Null category in db";
+                        if (c != null) {
+                            categoryMap.put(c.getName(), c);
+                        }
+                    }
                     for (Card card : cardList) {
                         assert card.getCategory() != null : "Card's category must be populated";
                         assert card.getLearningData() != null : "Card's learningData must be populated";
@@ -476,12 +485,25 @@ public class CardDaoImpl extends AbstractHelperDaoImpl<Card, Integer> implements
         try {
             final LearningDataDao learningDataDao = getHelper().getLearningDataDao();
             final CategoryDao categoryDao = getHelper().getCategoryDao();
+
+            // Use the map to get rid of duplicate category creation
+
             callBatchTasks(new Callable<Void>() {
-                // Use the map to get rid of duplicate category creation
                 final Map<String, Category> categoryMap = new HashMap<String, Category>();
                 public Void call() throws Exception {
                     assert card.getCategory() != null : "Card's category must be populated";
                     assert card.getLearningData() != null : "Card's learningData must be populated";
+
+                    // Populate the existing categories.
+                    List<Category> existingCategories = categoryDao.queryForAll();
+
+                    for (Category c : existingCategories) {
+                        assert c != null : "Null category in db";
+                        if (c != null) {
+                            categoryMap.put(c.getName(), c);
+                        }
+                    }
+
                     String currentCategoryName = card.getCategory().getName();
                     if (categoryMap.containsKey(currentCategoryName)) {
                         card.setCategory(categoryMap.get(currentCategoryName));
@@ -526,7 +548,7 @@ public class CardDaoImpl extends AbstractHelperDaoImpl<Card, Integer> implements
         }
     }
 
-    public List<Card> getRandomCards(Category filterCategory, int limit) {
+    public List<Card> getCardsByCategory(Category filterCategory, boolean random, int limit) {
         try {
             LearningDataDao learningDataDao = getHelper().getLearningDataDao();
             QueryBuilder<LearningData, Integer> learnQb = learningDataDao.queryBuilder();
@@ -539,7 +561,9 @@ public class CardDaoImpl extends AbstractHelperDaoImpl<Card, Integer> implements
 
             cardQb.setWhere(where);
             // Return random ordered cards
-            cardQb.orderByRaw("random()");
+            if (random) {
+                cardQb.orderByRaw("random()");
+            }
             cardQb.limit((long)limit);
             List<Card> cs = cardQb.query();
             for (Card c : cs) {
@@ -648,12 +672,60 @@ public class CardDaoImpl extends AbstractHelperDaoImpl<Card, Integer> implements
         }
     }
 
+    public List<Card> getCardsByOrdinalAndSize(long startOrd, long size) {
+        LearningDataDao learningDataDao = getHelper().getLearningDataDao();
+        QueryBuilder<Card, Integer> qb = queryBuilder();
+        qb.limit(size);
+        try {
+            Where<Card, Integer> where = qb.where().ge("ordinal", startOrd);
+            qb.setWhere(where);
+            qb.orderBy("ordinal", true);
+            PreparedQuery<Card> pq = qb.prepare();
+            List<Card> result = query(pq);
+            for (Card c : result) {
+                learningDataDao.refresh(c.getLearningData());
+            }
+            
+            return result;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void maintainOrdinal() throws SQLException {
         executeRaw("CREATE TABLE IF NOT EXISTS tmp_count (id INTEGER PRIMARY KEY AUTOINCREMENT, ordinal INTEGER)");
         executeRaw("INSERT INTO tmp_count(ordinal) SELECT ordinal FROM cards;");
         executeRaw("UPDATE cards SET ordinal = (SELECT tmp_count.id FROM tmp_count WHERE tmp_count.ordinal = cards.ordinal)");
         executeRaw("DROP TABLE IF EXISTS tmp_count;");
     }
+
+    public List<Card> getRandomCards(Category filterCategory, int limit) {
+        try {
+            LearningDataDao learningDataDao = getHelper().getLearningDataDao();
+            QueryBuilder<LearningData, Integer> learnQb = learningDataDao.queryBuilder();
+            learnQb.selectColumns("id");
+            QueryBuilder<Card, Integer> cardQb = this.queryBuilder();
+            Where<Card, Integer> where = cardQb.where().in("learningData_id", learnQb);
+            if (filterCategory != null) {
+                where.and().eq("category_id", filterCategory.getId());
+            }
+
+            cardQb.setWhere(where);
+            // Return random ordered cards
+            cardQb.orderByRaw("random()");
+            cardQb.limit((long)limit);
+            List<Card> cs = cardQb.query();
+            for (Card c : cs) {
+                learningDataDao.refresh(c.getLearningData());
+            }
+            return cs;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+
 
 }
 

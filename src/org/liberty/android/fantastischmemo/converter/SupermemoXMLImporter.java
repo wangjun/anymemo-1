@@ -50,7 +50,7 @@ import android.util.Log;
 import android.content.Context;
 
 public class SupermemoXMLImporter extends org.xml.sax.helpers.DefaultHandler implements AbstractConverter{
-	public Locator mLocator;
+    public Locator mLocator;
     private Context mContext;
     private List<Card> cardList;
     private Card card;
@@ -59,28 +59,28 @@ public class SupermemoXMLImporter extends org.xml.sax.helpers.DefaultHandler imp
     private int interval;
     private SimpleDateFormat supermemoFormat = new SimpleDateFormat("dd.MM.yy");
 
-	
-	private StringBuffer characterBuf;
+    
+    private StringBuffer characterBuf;
     private final String TAG = "org.liberty.android.fantastischmemo.SupermemoXMLConverter";
 
-	
-	
+    
+    
     public SupermemoXMLImporter(Context context){
         mContext = context;
     }
 
     @Override
     public void convert(String src, String dest) throws Exception{
-		URL mXMLUrl = new URL("file:///" + src);
-		cardList = new LinkedList<Card>();
+        URL mXMLUrl = new URL("file:///" + src);
+        cardList = new LinkedList<Card>();
 
         System.setProperty("org.xml.sax.driver","org.xmlpull.v1.sax2.Driver"); 
 
-		SAXParserFactory spf = SAXParserFactory.newInstance();
-		SAXParser sp = spf.newSAXParser();
-		XMLReader xr = sp.getXMLReader();
-		xr.setContentHandler(this);
-		xr.parse(new InputSource(mXMLUrl.openStream()));
+        SAXParserFactory spf = SAXParserFactory.newInstance();
+        SAXParser sp = spf.newSAXParser();
+        XMLReader xr = sp.getXMLReader();
+        xr.setContentHandler(this);
+        xr.parse(new InputSource(mXMLUrl.openStream()));
 
         AnyMemoDBOpenHelper helper = AnyMemoDBOpenHelperManager.getHelper(mContext, dest);
         try {
@@ -90,8 +90,8 @@ public class SupermemoXMLImporter extends org.xml.sax.helpers.DefaultHandler imp
             AnyMemoDBOpenHelperManager.releaseHelper(helper);
         }
     }
-	
-	public void startElement(String namespaceURI, String localName, String qName, Attributes atts) throws SAXException{
+    
+    public void startElement(String namespaceURI, String localName, String qName, Attributes atts) throws SAXException{
         if(localName.equals("SuperMemoElement")){
             card = new Card();
             card.setCategory(new Category());
@@ -99,13 +99,13 @@ public class SupermemoXMLImporter extends org.xml.sax.helpers.DefaultHandler imp
             card.setLearningData(ld);
 
             // Set a default interval, in case of malformed the xml file
-            interval = 1;
+            interval = 0;
 
         }
-		characterBuf = new StringBuffer();
-	}
-	
-	public void endElement(String namespaceURI, String localName, String qName) throws SAXException{
+        characterBuf = new StringBuffer();
+    }
+    
+    public void endElement(String namespaceURI, String localName, String qName) throws SAXException{
         if(localName.equals("SuperMemoElement")){
             card.setOrdinal(count);
             // If this is a new card and the learning data is like this:
@@ -122,17 +122,22 @@ public class SupermemoXMLImporter extends org.xml.sax.helpers.DefaultHandler imp
                 ld.setNextLearnDate(DateUtils.addDays(ld.getLastLearnDate(), interval));
             }
 
+            // If an old card get interval 0, then we assume the last grade is 0 as failure card.
+            if (interval == 0 && ld.getAcqReps() != 0) {
+                ld.setGrade(0);
+            }
+
             cardList.add(card);
             card = null;
             ld = null;
             count += 1;
         }
-		if(localName.equals("Question")){
+        if(localName.equals("Question")){
             card.setQuestion(characterBuf.toString());
-		}
-		if(localName.equals("Answer")){
+        }
+        if(localName.equals("Answer")){
             card.setAnswer(characterBuf.toString());
-		}
+        }
         if(localName.equals("Lapses")){
             ld.setLapses(Integer.parseInt(characterBuf.toString()));
         }
@@ -144,13 +149,9 @@ public class SupermemoXMLImporter extends org.xml.sax.helpers.DefaultHandler imp
         }
         if(localName.equals("AFactor")){
             double g = Double.parseDouble(characterBuf.toString());
-            if(g <= 1.5){
-                ld.setGrade(1);
-            }
-            else if(g <= 5.5){
+            if(g <= 5.5) {
                 ld.setGrade(2);
-            }
-            else{
+            } else {
                 ld.setGrade(3);
             }
         }
@@ -167,24 +168,33 @@ public class SupermemoXMLImporter extends org.xml.sax.helpers.DefaultHandler imp
                 Log.e(TAG, "Parsing date error: " + characterBuf.toString(), e);
             }
         }
-	}
-	
-	public void setDocumentLocator(Locator locator){
-		mLocator = locator;
-	}
-	
-	public void characters(char ch[], int start, int length){
-		characterBuf.append(ch, start, length);
-	}
-	
-	public void startDocument() throws SAXException{
-		
-	}
-	
-	public void endDocument() throws SAXException{
-		
-		
-	}
-	
+    }
+    
+    public void setDocumentLocator(Locator locator){
+        mLocator = locator;
+    }
+    
+    public void characters(char ch[], int start, int length){
+        characterBuf.append(ch, start, length);
+    }
+    
+    public void startDocument() throws SAXException{
+        
+    }
+    
+    public void endDocument() throws SAXException{
+        
+        
+    }
+
+    @Override
+    public String getSrcExtension() {
+        return "xml";
+    }
+
+    @Override
+    public String getDestExtension() {
+        return "db";
+    }
 
 }

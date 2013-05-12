@@ -22,68 +22,74 @@ package org.liberty.android.fantastischmemo.ui;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
 import org.apache.mycommons.io.FileUtils;
-
 import org.liberty.android.fantastischmemo.AMActivity;
-import org.liberty.android.fantastischmemo.AnyMemoService;
 import org.liberty.android.fantastischmemo.AMEnv;
+import org.liberty.android.fantastischmemo.AMPrefKeys;
+import org.liberty.android.fantastischmemo.AnyMemoService;
 import org.liberty.android.fantastischmemo.R;
 import org.liberty.android.fantastischmemo.SetAlarmReceiver;
+import org.liberty.android.fantastischmemo.utils.AMFileUtil;
+import org.liberty.android.fantastischmemo.utils.AMUiUtil;
 
 import android.app.AlertDialog;
-
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-
 import android.content.res.Resources;
-
 import android.net.Uri;
 import android.os.Bundle;
-
 import android.preference.PreferenceManager;
-
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentTransaction;
-
 import android.support.v4.view.ViewPager;
-
 import android.text.Html;
-
 import android.text.method.LinkMovementMethod;
-
 import android.util.Log;
-
-import android.view.Display;
 import android.view.View;
-
+import android.widget.HorizontalScrollView;
 import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
+import android.widget.TabWidget;
 import android.widget.TextView;
 
 public class AnyMemo extends AMActivity {
-    private final static String WEBSITE_VERSION="http://anymemo.org/index.php?page=version";
+    private static final String WEBSITE_VERSION="http://anymemo.org/index.php?page=version";
+
+    public static final String EXTRA_INITIAL_TAB = "initial_tab";
+
     private TabHost mTabHost;
     private TabManager mTabManager;
     private ViewPager mViewPager;
     private PagerAdapter mPagerAdapter;
+    private HorizontalScrollView mHorizontalScrollView;
+
     private SharedPreferences settings;
+
+    private AMUiUtil amUiUtil;
+
+    private AMFileUtil amFileUtil;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.main_tabs);
+
+        amUiUtil = new AMUiUtil(this);
+        amFileUtil = new AMFileUtil(this);
+
         mTabHost = (TabHost)findViewById(android.R.id.tabhost);
+        mHorizontalScrollView = (HorizontalScrollView) findViewById(R.id.horizontal_scroll_view);
+
         mTabHost.setup();
 
         // Page must be initialized before tab hosts
@@ -91,9 +97,41 @@ public class AnyMemo extends AMActivity {
         initViewPager();
         initTabHosts();
 
-        // This is the default tab.
-        if (savedInstanceState != null) {
-            mTabHost.setCurrentTabByTag(savedInstanceState.getString("recent"));
+        // Find out the initial tab.
+        String initialTab = "recent";
+
+        Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            initialTab = extras.getString(EXTRA_INITIAL_TAB);
+        } else if (savedInstanceState != null) {
+            // This is the default tab.
+            initialTab = savedInstanceState.getString("recent");
+        }
+
+        mTabHost.setCurrentTabByTag(initialTab);
+
+
+        // Make sure the widget will fill the screen if the
+        // screen size is large while still keep the widget
+        // tabs scrollable for small screen.
+        TabWidget widget = mTabHost.getTabWidget();
+
+        int display_width_px = this.getWindowManager().getDefaultDisplay().getWidth();
+        int display_width_dp = amUiUtil.convertPxToDp(display_width_px);
+
+
+        // This is the minimal DP of width for the widget title.
+        int minimal_dp = 80;
+
+        int minimal_px = amUiUtil.convertDpToPx(minimal_dp);
+
+        int width_px = minimal_px;
+        if (minimal_dp * widget.getChildCount() < display_width_dp) {
+            width_px = display_width_px / widget.getChildCount();
+        } 
+        for (int i = 0; i < widget.getChildCount(); ++i) {
+            View v = widget.getChildAt(i);
+            v.setMinimumWidth(width_px);
         }
 
         
@@ -102,6 +140,7 @@ public class AnyMemo extends AMActivity {
         prepareStoreage();
         prepareFirstTimeRun();
         prepareNotification();
+
     }
 
     private void prepareStoreage() {
@@ -124,10 +163,10 @@ public class AnyMemo extends AMActivity {
     private void prepareFirstTimeRun() {
         File sdPath = new File(AMEnv.DEFAULT_ROOT_PATH);
         //Check the version, if it is updated from an older version it will show a dialog
-        String savedVersion = settings.getString("saved_version", "");
+        String savedVersion = settings.getString(AMPrefKeys.SAVED_VERSION_KEY, "");
         String thisVersion = getResources().getString(R.string.app_version);
 
-        boolean firstTime = settings.getBoolean("first_time", true);
+        boolean firstTime = settings.getBoolean(AMPrefKeys.FIRST_TIME_KEY, true);
 
         // Force clean preference for non-compstible versions.
         if ((!savedVersion.startsWith(thisVersion.substring(0,1)) || savedVersion.equals("9.0"))) {
@@ -142,17 +181,15 @@ public class AnyMemo extends AMActivity {
          */
         if(firstTime == true){
             SharedPreferences.Editor editor = settings.edit();
-            editor.putBoolean("first_time", false);
-            editor.putString("recentdbpath0", AMEnv.DEFAULT_ROOT_PATH + AMEnv.DEFAULT_DB_NAME);
+            editor.putBoolean(AMPrefKeys.FIRST_TIME_KEY, false);
+            editor.putString(AMPrefKeys.getRecentPathKey(0), AMEnv.DEFAULT_ROOT_PATH + AMEnv.DEFAULT_DB_NAME);
             editor.commit();
             try {
-                InputStream in = getResources().getAssets().open(AMEnv.DEFAULT_DB_NAME);
-                FileUtils.copyInputStreamToFile(in, new File(sdPath + "/" + AMEnv.DEFAULT_DB_NAME));
+                amFileUtil.copyFileFromAsset(AMEnv.DEFAULT_DB_NAME,  new File(sdPath + "/" + AMEnv.DEFAULT_DB_NAME));
 
                 InputStream in2 = getResources().getAssets().open(AMEnv.EMPTY_DB_NAME);
                 String emptyDbPath = getApplicationContext().getFilesDir().getAbsolutePath() + "/" + AMEnv.EMPTY_DB_NAME;
                 FileUtils.copyInputStreamToFile(in2, new File(emptyDbPath));
-                in.close();
                 in2.close();
             }
             catch(IOException e){
@@ -164,11 +201,7 @@ public class AnyMemo extends AMActivity {
         if(!savedVersion.equals(thisVersion)){
             SharedPreferences.Editor editor = settings.edit();
             /* save new version number */
-            editor.putString("saved_version", thisVersion);
-            /* Save the screen dimension for further use */
-            Display display = getWindowManager().getDefaultDisplay();
-            editor.putInt("screen_width", display.getWidth());
-            editor.putInt("screen_height", display.getHeight());
+            editor.putString(AMPrefKeys.SAVED_VERSION_KEY, thisVersion);
             editor.commit();
 
             View alertView = View.inflate(this, R.layout.link_alert, null);
@@ -213,7 +246,14 @@ public class AnyMemo extends AMActivity {
         startService(myIntent);
     }
 
-
+    @Override
+    public void restartActivity() {
+        // The restart activity remember the current tab.
+        Intent intent = new Intent(this, this.getClass());
+        intent.putExtra(EXTRA_INITIAL_TAB, mTabHost.getCurrentTabTag());
+        startActivity(intent);
+        finish();
+    }
 
     @SuppressWarnings("unused")
     private class TabManager {
@@ -350,8 +390,16 @@ public class AnyMemo extends AMActivity {
 			}
 
 			@Override
-			public void onPageScrolled(int arg0, float arg1, int arg2) {
-                // Do nothing
+			public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                // Scroll the horizontal scroll bar that wrap the tabwidget
+                // so the current tab title can be visible.
+                View tabView = mTabHost.getTabWidget().getChildAt(position);
+                final int width = mHorizontalScrollView.getWidth(); 
+                int scrollPos = tabView.getLeft() - (width - tabView.getWidth()) / 2; 
+
+                mHorizontalScrollView.scrollTo(scrollPos, 0);
+                mHorizontalScrollView.refreshDrawableState();
+
 			}
 
         };

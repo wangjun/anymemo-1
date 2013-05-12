@@ -1,5 +1,7 @@
 package org.liberty.android.fantastischmemo.domain;
 
+import org.liberty.android.fantastischmemo.AMPrefKeys;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -16,47 +18,47 @@ public class Option {
     }
 
     public boolean getEnableArabicEngine() {
-        return settings.getBoolean("enable_third_party_arabic", true);
+        return settings.getBoolean(AMPrefKeys.ENABLE_THIRD_PARTY_ARABIC_KEY, true);
     }
 
     public void setEnableArabicEngine(boolean enable) {
-        editor.putBoolean("enable_third_party_arabic", enable);
+        editor.putBoolean(AMPrefKeys.ENABLE_THIRD_PARTY_ARABIC_KEY, enable);
         editor.commit();
     }
 
     public ButtonStyle getButtonStyle() {
-        return ButtonStyle.parse(settings.getString("button_style", "ANYMEMO"));
+        return ButtonStyle.parse(settings.getString(AMPrefKeys.BUTTON_STYLE_KEY, "ANYMEMO"));
     }
 
     public void setButtonStyle(ButtonStyle style) {
-        editor.putString("button_style", style.toString());
+        editor.putString(AMPrefKeys.BUTTON_STYLE_KEY, style.toString());
         editor.commit();
     }
 
     public boolean getVolumeKeyShortcut() {
-        return settings.getBoolean("enable_volume_key", false);
+        return settings.getBoolean(AMPrefKeys.ENABLE_VOLUME_KEY_KEY, false);
     }
 
     public void setVolumeKeyShortcut(boolean enable) {
-        editor.putBoolean("enable_volume_key", enable);
+        editor.putBoolean(AMPrefKeys.ENABLE_VOLUME_KEY_KEY, enable);
         editor.commit();
     }
 
     public boolean getCopyClipboard() {
-        return settings.getBoolean("copyclipboard", true);
+        return settings.getBoolean(AMPrefKeys.COPY_CLIPBOARD_KEY, true);
     }
 
     public void setCopyClipboard(boolean enable) {
-        editor.putBoolean("copyclipboard", enable);
+        editor.putBoolean(AMPrefKeys.COPY_CLIPBOARD_KEY, enable);
         editor.commit();
     }
 
 	public DictApp getDictApp() {
-        return DictApp.parse(settings.getString("dict_app", "FORA"));
+        return DictApp.parse(settings.getString(AMPrefKeys.DICT_APP_KEY, "COLORDICT"));
 	}
 
 	public ShuffleType getShuffleType() {
-        if (settings.getBoolean("shuffling_cards", false)) {
+        if (settings.getBoolean(AMPrefKeys.SHUFFLING_CARDS_KEY, false)) {
             return ShuffleType.LOCAL;
         } else {
             return ShuffleType.NONE;
@@ -64,30 +66,34 @@ public class Option {
 	}
 
 	public SpeakingType getSpeakingType() {
-        return SpeakingType.parse(settings.getString("speech_ctl", "TAP"));
+        return SpeakingType.parse(settings.getString(AMPrefKeys.SPEECH_CONTROL_KEY, "TAP"));
 	}
 
-    public int getSavedId(String prefix, String key, int defaultValue) {
-        return settings.getInt(prefix + key, defaultValue);
-    }
-
-    public void setSavedId(String prefix, String key, int value) {
-        editor.putInt(prefix + key, value);
-        editor.commit();
-    }
-    
     public int getRecentCount() {
-    	return settings.getInt("recent_count", 7);
+    	return settings.getInt(AMPrefKeys.RECENT_COUNT_KEY, 7);
     }
     
     public int getQueueSize() {
-        String size = settings.getString("learning_queue_size", "10");
+        String size = settings.getString(AMPrefKeys.LEARN_QUEUE_SIZE_KEY, "10");
         int tmpSize = Integer.parseInt(size);
         if(tmpSize > 0){
             return tmpSize;
         } else {
             return 10;
         }
+    }
+
+    public boolean getEnableAnimation() {
+        return settings.getBoolean(AMPrefKeys.ENABLE_ANIMATION_KEY, true);
+    }
+
+    public boolean getGestureEnabled() {
+        return settings.getBoolean(AMPrefKeys.CARD_GESTURE_ENABLED, false);
+    }
+
+    public void setGestureEnabled(boolean enable) {
+        editor.putBoolean(AMPrefKeys.CARD_GESTURE_ENABLED, enable);
+        editor.commit();
     }
     
     public static enum ButtonStyle {
@@ -110,12 +116,16 @@ public class Option {
 
     public static enum DictApp {
         COLORDICT,
-        FORA;
+        FORA,
+        BLUEDICT;
+
         public static DictApp parse(String a){
-            if(a.equals("COLORDICT")){
-                return COLORDICT;
-            } else{
+            if(a.equals("FORA")){
                 return FORA;
+            } else if (a.equals("BLUEDICT")) {
+                return BLUEDICT;
+            } else {
+                return COLORDICT;
             }
         }
     }

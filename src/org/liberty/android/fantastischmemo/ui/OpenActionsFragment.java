@@ -20,21 +20,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 package org.liberty.android.fantastischmemo.ui;
 
 import org.liberty.android.fantastischmemo.AMActivity;
+import org.liberty.android.fantastischmemo.AMPrefKeys;
 import org.liberty.android.fantastischmemo.R;
-
-import org.liberty.android.fantastischmemo.utils.AMUtil;
+import org.liberty.android.fantastischmemo.utils.AMFileUtil;
+import org.liberty.android.fantastischmemo.utils.AMPrefUtil;
 import org.liberty.android.fantastischmemo.utils.RecentListUtil;
+import org.liberty.android.fantastischmemo.utils.ShareUtil;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-
 import android.content.DialogInterface;
 import android.content.Intent;
-
 import android.os.Bundle;
-
 import android.support.v4.app.DialogFragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,19 +40,31 @@ import android.view.ViewGroup;
 public class OpenActionsFragment extends DialogFragment {
     public static String EXTRA_DBPATH = "dbpath";
     private AMActivity mActivity;
+
+    private ShareUtil shareUtil;
+
+    private AMPrefUtil amPrefUtil;
+
+    private AMFileUtil amFileUtil;
+
     private String dbPath;
+
     private View studyItem;
     private View editItem;
     private View listItem;
-    private View cramItem;
+    private View quizItem;
     private View settingsItem;
     private View statisticsItem;
+    private View shareItem;
     private View deleteItem;
 
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         mActivity = (AMActivity)activity;
+        shareUtil = new ShareUtil(activity);
+        amPrefUtil = new AMPrefUtil(activity);
+        amFileUtil = new AMFileUtil(activity);
     }
     @Override
     public void onCreate(Bundle bundle) {
@@ -78,8 +88,8 @@ public class OpenActionsFragment extends DialogFragment {
         listItem = v.findViewById(R.id.list);
         listItem.setOnClickListener(buttonClickListener);
 
-        cramItem = v.findViewById(R.id.cram);
-        cramItem.setOnClickListener(buttonClickListener);
+        quizItem = v.findViewById(R.id.quiz);
+        quizItem.setOnClickListener(buttonClickListener);
 
         settingsItem = v.findViewById(R.id.settings);
         settingsItem.setOnClickListener(buttonClickListener);
@@ -89,6 +99,10 @@ public class OpenActionsFragment extends DialogFragment {
 
         statisticsItem = v.findViewById(R.id.statistics);
         statisticsItem.setOnClickListener(buttonClickListener);
+
+        shareItem = v.findViewById(R.id.share);
+        shareItem.setOnClickListener(buttonClickListener);
+
         return v;
     }
 
@@ -97,16 +111,18 @@ public class OpenActionsFragment extends DialogFragment {
         	final RecentListUtil rlu = new RecentListUtil(mActivity);
             if (v == studyItem) {
                 Intent myIntent = new Intent();
-                myIntent.setClass(mActivity, MemoScreen.class);
-                myIntent.putExtra(MemoScreen.EXTRA_DBPATH, dbPath);
+                myIntent.setClass(mActivity, StudyActivity.class);
+                myIntent.putExtra(StudyActivity.EXTRA_DBPATH, dbPath);
                 startActivity(myIntent);
                 rlu.addToRecentList(dbPath);
             }
 
             if (v == editItem) {
                 Intent myIntent = new Intent();
-                myIntent.setClass(mActivity, EditScreen.class);
-                myIntent.putExtra(EditScreen.EXTRA_DBPATH, dbPath);
+                myIntent.setClass(mActivity, PreviewEditActivity.class);
+                myIntent.putExtra(PreviewEditActivity.EXTRA_DBPATH, dbPath);
+                int startId = amPrefUtil.getSavedId(AMPrefKeys.PREVIEW_EDIT_START_ID_PREFIX, dbPath, 1);
+                myIntent.putExtra(PreviewEditActivity.EXTRA_CARD_ID, startId);
                 startActivity(myIntent);
                 rlu.addToRecentList(dbPath);
             }
@@ -114,17 +130,17 @@ public class OpenActionsFragment extends DialogFragment {
             if (v == listItem) {
                 Intent myIntent = new Intent();
                 myIntent.setClass(mActivity, ListEditScreen.class);
-                myIntent.putExtra(MemoScreen.EXTRA_DBPATH, dbPath);
+                myIntent.putExtra(StudyActivity.EXTRA_DBPATH, dbPath);
                 startActivity(myIntent);
                 rlu.addToRecentList(dbPath);
             }
 
-            if (v == cramItem) {
-                Intent myIntent = new Intent();
-                myIntent.setClass(mActivity, MemoScreen.class);
-                myIntent.putExtra(MemoScreen.EXTRA_DBPATH, dbPath);
-                myIntent.putExtra(MemoScreen.EXTRA_CRAM, true);
-                startActivity(myIntent);
+            if (v == quizItem) {
+                QuizLauncherDialogFragment df = new QuizLauncherDialogFragment();
+                Bundle b = new Bundle();
+                b.putString(CategoryEditorFragment.EXTRA_DBPATH, dbPath);
+                df.setArguments(b);
+                df.show(mActivity.getSupportFragmentManager(), "QuizLauncherDialog");
                 rlu.addToRecentList(dbPath);
             }
 
@@ -141,6 +157,11 @@ public class OpenActionsFragment extends DialogFragment {
                 myIntent.putExtra(SettingsScreen.EXTRA_DBPATH, dbPath);
                 startActivity(myIntent);
             }
+
+            if (v == shareItem) {
+                shareUtil.shareDb(dbPath);
+            }
+
             if (v == deleteItem) {
                 new AlertDialog.Builder(mActivity)
                     .setTitle(getString(R.string.delete_text))
@@ -148,7 +169,7 @@ public class OpenActionsFragment extends DialogFragment {
                     .setPositiveButton(getString(R.string.delete_text), new DialogInterface.OnClickListener(){
                         @Override
                         public void onClick(DialogInterface dialog, int which ){
-                            AMUtil.deleteDbSafe(dbPath);
+                            amFileUtil.deleteDbSafe(dbPath);
                             rlu.deleteFromRecentList(dbPath);
                             /* Refresh the list */
                             mActivity.restartActivity();
