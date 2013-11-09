@@ -49,5 +49,9 @@ public class AMEnv {
     public final static String DROPBOX_CONSUMER_SECRET = "bmgikjefor073dh";
     public final static String DROPBOX_OAUTH_VERSION = "1.0";
     public final static String DROPBOX_OAUTH_SIGNATURE_METHOD="PLAINTEXT";
-
+    
+    // Quizlet oauth constants
+    public final static String QUIZLET_CLIENT_ID = "fgFdZShXfG";
+    public final static String QUIZLET_CLIENT_SECRET = "m7w3nknqIt3Tdu8hGR8csg";
+    public final static String QUIZLET_REDIRECT_URI = "anymemo-quizlet://oauth";
 }

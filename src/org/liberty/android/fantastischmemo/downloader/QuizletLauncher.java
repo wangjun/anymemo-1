@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 package org.liberty.android.fantastischmemo.downloader;
 
 import org.liberty.android.fantastischmemo.*;
+import org.liberty.android.fantastischmemo.downloader.quizlet.CardsetsActivity;
+
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -36,6 +38,7 @@ public class QuizletLauncher extends AMActivity implements OnClickListener{
     private Button searchUserButton;
     private SharedPreferences settings;
     private SharedPreferences.Editor editor;
+    private Button startQuizButton;
 
     @Override
 	public void onCreate(Bundle savedInstanceState){
@@ -43,12 +46,21 @@ public class QuizletLauncher extends AMActivity implements OnClickListener{
         setContentView(R.layout.quizlet_launcher);
         searchTagButton = (Button)findViewById(R.id.quizlet_search_tag);
         searchUserButton = (Button)findViewById(R.id.quizlet_search_user);
+        startQuizButton = (Button)findViewById(R.id.quizlet_private_cards);
         searchTagButton.setOnClickListener(this);
         searchUserButton.setOnClickListener(this);
+        startQuizButton.setOnClickListener(setActivity);
         settings = PreferenceManager.getDefaultSharedPreferences(this);
         editor = settings.edit();
     }
 
+    private View.OnClickListener setActivity = new View.OnClickListener() {
+    	public void onClick(View v){
+    	Intent intent = new Intent(QuizletLauncher.this, CardsetsActivity.class);
+    	startActivity(intent);
+    	}
+    };
+    
     @Override
     public void onResume(){
         super.onResume();
