@@ -11,3 +11,10 @@ obj/
 *.xmi
 .project
 .classpath
+build/
+
+# IntelliJ Idea/Android Studio files
+*.iml
+*.ipr
+*.iws
+.idea/

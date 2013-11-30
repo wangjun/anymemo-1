@@ -50,7 +50,6 @@ import android.gesture.GestureLibrary;
 import android.gesture.GestureOverlayView;
 import android.gesture.Prediction;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
@@ -103,23 +102,24 @@ public abstract class QACardActivity extends AMActivity {
      * This needs to be defined before onCreate so in onCreate, all loaders will
      * be registered with the right manager.
      */
-    private MultipleLoaderManager multipleLoaderManager = new MultipleLoaderManager();
+    private MultipleLoaderManager multipleLoaderManager;
 
     @Inject
     public void setOption(Option option) {
         this.option = option;
     }
 
-    public CardTTSUtil getCardTTSUtil() {
-        return cardTTSUtil;
+    @Inject
+    public void setMultipleLoaderManager(
+            MultipleLoaderManager multipleLoaderManager) {
+        this.multipleLoaderManager = multipleLoaderManager;
     }
 
     /**
      * This is for testing only.
      */
-    public void setMultipleLoaderManager(
-            MultipleLoaderManager multipleLoaderManager) {
-        this.multipleLoaderManager = multipleLoaderManager;
+    public CardTTSUtil getCardTTSUtil() {
+        return cardTTSUtil;
     }
 
     /**
@@ -134,6 +134,15 @@ public abstract class QACardActivity extends AMActivity {
     @Override
     public void onCreate(Bundle bundle) {
         super.onCreate(bundle);
+        setContentView(getContentView());
+
+    }
+
+    /**
+     * Call this method to start the initialization process.
+     * Must be called in UI thread.
+     */
+    public void startInit() {
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             dbPath = extras.getString(EXTRA_DBPATH);
@@ -143,7 +152,6 @@ public abstract class QACardActivity extends AMActivity {
         dbName = FilenameUtils.getName(dbPath);
 
         dbPath = extras.getString(EXTRA_DBPATH);
-        setContentView(getContentView());
 
         // Set teh default animation
         animationInResId = R.anim.slide_left_in;
@@ -156,7 +164,7 @@ public abstract class QACardActivity extends AMActivity {
         multipleLoaderManager.registerLoaderCallbacks(CARD_TTS_UTIL_LOADER_ID, new CardTTSUtilLoaderCallbacks(), true);
         multipleLoaderManager.registerLoaderCallbacks(CARD_TEXT_UTIL_LOADER_ID, new CardTextUtilLoaderCallbacks(), true);
         multipleLoaderManager.setOnAllLoaderCompletedRunnable(onPostInitRunnable);
-        multipleLoaderManager.startLoading(this);
+        multipleLoaderManager.startLoading();
     }
     
     public int getContentView() {
@@ -405,11 +413,6 @@ public abstract class QACardActivity extends AMActivity {
 
     // Called when the initalizing finished.
     protected void onPostInit() {
-        DialogFragment df = (DialogFragment) getSupportFragmentManager()
-            .findFragmentByTag(LoadingProgressFragment.class.toString());
-        if (df != null) {
-            df.dismiss();
-        }
         View buttonsView = findViewById(R.id.buttons_root);
         if (buttonsView != null && !setting.isDefaultColor()) {
             buttonsView.setBackgroundColor(setting
@@ -495,7 +498,6 @@ public abstract class QACardActivity extends AMActivity {
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
         AnyMemoDBOpenHelperManager.releaseHelper(dbOpenHelper);
 
         if (cardTTSUtil != null) {
@@ -509,6 +511,7 @@ public abstract class QACardActivity extends AMActivity {
         myIntent.putExtra("request_code", AnyMemoService.CANCEL_NOTIFICATION
                 | AnyMemoService.UPDATE_WIDGET);
         startService(myIntent);
+        super.onDestroy();
     }
 
     // Set the small title to display additional informaiton

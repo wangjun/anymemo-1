@@ -51,7 +51,6 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.view.Menu;
@@ -111,13 +110,19 @@ public class SettingsScreen extends AMActivity {
 
     private final static String WEBSITE_HELP_SETTINGS="http://anymemo.org/wiki/index.php?title=Card_styles";
 
-    private MultipleLoaderManager multipleLoaderManager = new MultipleLoaderManager();
+    private MultipleLoaderManager multipleLoaderManager;
 
     @Inject
     public void setDatabaseUtil(DatabaseUtil databaseUtil) {
         this.databaseUtil = databaseUtil;
     }
 
+
+    @Inject
+    public void setMultipleLoaderManager(
+            MultipleLoaderManager multipleLoaderManager) {
+        this.multipleLoaderManager = multipleLoaderManager;
+    }
 
     @Override
     public void onCreate(Bundle bundle) {
@@ -133,7 +138,7 @@ public class SettingsScreen extends AMActivity {
 
         multipleLoaderManager.registerLoaderCallbacks(1, new SettingLoaderCallbacks(), false);
         multipleLoaderManager.setOnAllLoaderCompletedRunnable(onPostInitRunnable);
-        multipleLoaderManager.startLoading(this);
+        multipleLoaderManager.startLoading();
     }
 
     @Override
@@ -280,11 +285,6 @@ public class SettingsScreen extends AMActivity {
         @Override
         public void run() {
             // Dismiss the progress dialog
-            DialogFragment df = (DialogFragment) getSupportFragmentManager()
-                .findFragmentByTag(LoadingProgressFragment.class.toString());
-            if (df != null) {
-                df.dismiss();
-            }
 
             settingDao = dbOpenHelper.getSettingDao();
 
@@ -618,7 +618,7 @@ public class SettingsScreen extends AMActivity {
             progressDialog.dismiss();
 
             // Force reloading
-            multipleLoaderManager.startLoading(SettingsScreen.this, true);
+            multipleLoaderManager.startLoading(true);
         }
     }
 
