@@ -27,17 +27,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.StringUtils;
+
+import org.liberty.android.fantastischmemo.R;
 import org.liberty.android.fantastischmemo.tts.SpeakWord.OnCompletedListener;
 
 import android.content.Context;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
+import android.widget.Toast;
 
 public class AnyMemoTTSImpl implements AnyMemoTTS, TextToSpeech.OnInitListener{
 
 	private volatile TextToSpeech myTTS;
 	private SpeakWord speakWord;
 	private final Locale myLocale;
+
+    private Context context;
 
     private volatile ReentrantLock initLock = new ReentrantLock();
 
@@ -68,10 +73,15 @@ public class AnyMemoTTSImpl implements AnyMemoTTS, TextToSpeech.OnInitListener{
             assert myLocale != null;
 
             int result = myTTS.setLanguage(myLocale);
+
             if (result == TextToSpeech.LANG_MISSING_DATA) {
+                Toast.makeText(context, context.getString(R.string.tts_language_data_missing_text) + " " + myLocale, Toast.LENGTH_LONG)
+                    .show();
                 Log.e(TAG, "Missing language data");
             }
             if (result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Toast.makeText(context, context.getString(R.string.unsupported_audio_locale_text) + " " + myLocale, Toast.LENGTH_LONG)
+                    .show();
                 Log.e(TAG, "Language is not supported");
             }
         } else {
@@ -86,7 +96,10 @@ public class AnyMemoTTSImpl implements AnyMemoTTS, TextToSpeech.OnInitListener{
         // Or a null pointer for myTTS is waiting
 
         initLock.lock();
+        this.context = context;
         myLocale = getLocaleForTTS(locale);
+
+
         myTTS = new TextToSpeech(context, this);
         speakWord = new SpeakWord(audioSearchPath);
         initLock.unlock();
@@ -164,7 +177,7 @@ public class AnyMemoTTSImpl implements AnyMemoTTS, TextToSpeech.OnInitListener{
         });
 
         speakLock.lock();
-        myTTS.setLanguage(myLocale);
+
 
         Log.i(TAG, "processed_str is \"" + processed_str + "\"");
         myTTS.speak(processed_str, 0, params);

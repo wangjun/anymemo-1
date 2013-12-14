@@ -155,6 +155,9 @@ public class AnyMemoDBOpenHelper extends OrmLiteSqliteOpenHelper {
         }
     }
 
+    /**
+     * Do not call this method directly, use AnyMemoDBOpenHelperManager instead.
+     */
     @Override
     public void close() {
         isReleased = true;
@@ -260,5 +263,4 @@ public class AnyMemoDBOpenHelper extends OrmLiteSqliteOpenHelper {
     String getDbPath() {
         return dbPath;
     }
-
 }

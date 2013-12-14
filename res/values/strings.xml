@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
     <string name="app_name">AnyMemo</string>
     <string name="app_full_name">AnyMemo</string>
@@ -460,4 +460,10 @@
     <string name="start_ordinal_text">Start ordinal</string>
     <string name="end_ordinal_text">End ordinal</string>
     <string name="quizlet_private_cards">User private cards</string>
+
+    <string name="click_again_to_delete_text">Click again to delete</string>
+    <string name="arabic_text">Arabic</string>
+    <string name="unsupported_audio_locale_text">Selected audio language is not available for the current TTS engine.</string>
+    <string name="tts_language_data_missing_text">The language data is missing for the current TTS language.</string>
+
 </resources>

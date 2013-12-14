@@ -23,6 +23,7 @@ package org.liberty.android.fantastischmemo;
 import roboguice.RoboGuice;
 
 import android.app.Application;
+import android.content.Context;
 import android.os.Build;
 import android.util.Log;
 
@@ -36,9 +37,19 @@ public class AMApplication extends Application {
 
     private static final String TAG = "AMApplication";
 
+    private static Context currentApplicationContext = null;
+
+    public static Context getCurrentApplicationContext() {
+        assert currentApplicationContext != null : "Null application context!";
+
+        return currentApplicationContext;
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
+        currentApplicationContext = this;
+
         // The following line triggers the initialization of ACRA
         //ACRA.init(this);
 
