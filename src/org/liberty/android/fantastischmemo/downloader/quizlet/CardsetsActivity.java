@@ -6,6 +6,7 @@ import java.net.URL;
 import javax.net.ssl.HttpsURLConnection;
 
 import org.apache.commons.io.IOUtils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.liberty.android.fantastischmemo.R;
@@ -29,34 +30,6 @@ public class CardsetsActivity extends QuizletAccountActivity {
 		Ln.i("My user name is: " + authTokens[1]);
 		oauthToken = authTokens[0];
 		userId = authTokens[1];
-		new Thread() {
-			@Override
-			public void run() {
-		        try {
-		            URL url1 = new URL("https://api.quizlet.com/2.0/users/" + userId + "/sets");
-		            HttpsURLConnection conn = (HttpsURLConnection) url1.openConnection();
-		            conn.addRequestProperty("Authorization", "Bearer " + String.format(oauthToken));
-
-		            String s = new String(IOUtils.toByteArray(conn.getInputStream()));
-		            Ln.i("The relust set aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: " + s);
-		            JSONObject jsonObject = new JSONObject(s);
-		            if (jsonObject.has("error")) {
-		                String error = jsonObject.getString("error");
-		                Log.e(TAG, "API call error: " + error);
-		            }
-		            
-		        } catch (MalformedURLException e) {
-		             Ln.e("MalformedURLException", e);
-		             assert false;
-		        } catch (IOException e) {
-		             Ln.e("IOException", e);
-		             assert false;
-		        } catch (JSONException e) {
-		             Ln.e("JSONException", e);
-		             assert false;
-		        }
-			}
-		}.start();
 		
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         Fragment newFragment = new CardsetsListFragment();
