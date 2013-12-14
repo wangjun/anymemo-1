@@ -1,19 +1,29 @@
 package org.liberty.android.fantastischmemo.downloader.quizlet;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.net.ssl.HttpsURLConnection;
+
+import org.apache.commons.io.IOUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.liberty.android.fantastischmemo.downloader.AbstractDownloaderFragment;
 import org.liberty.android.fantastischmemo.downloader.DownloadItem;
-import org.liberty.android.fantastischmemo.downloader.DownloadItem.ItemType;
-import org.liberty.android.fantastischmemo.downloader.DownloaderQuizlet.DescriptionBuilder;
+
+import roboguice.util.Ln;
+import android.os.Bundle;
 
 public class CardsetsListFragment extends AbstractDownloaderFragment {
 	
     public static final String EXTRA_AUTH_TOKEN = "authToken";
     
     public static final String EXTRA_USER_ID = "userId";
+    
+    private String authToken;
+    
+    private String userId;
 	
     @Override
     public void onCreate(Bundle bundle) {
@@ -30,26 +40,26 @@ public class CardsetsListFragment extends AbstractDownloaderFragment {
 
         URL url1 = new URL("https://api.quizlet.com/2.0/users/" + userId + "/sets");
 		HttpsURLConnection conn = (HttpsURLConnection) url1.openConnection();
-		conn.addRequestProperty("Authorization", "Bearer " + String.format(oauthToken));
+		conn.addRequestProperty("Authorization", "Bearer " + authToken);
 
 		String s = new String(IOUtils.toByteArray(conn.getInputStream()));
 		Ln.i("The relust sets are: " + s);
-		JSONObject jsonObject = new JSONObject(s);		            
-		if (jsonObject.has("error")) {
-		            String error = jsonObject.getString("error");
-		            Log.e(TAG, "API call error: " + error);
-		        }
 		            
 		JSONArray jsonArray = new JSONArray(s);
 		for(int i = 0; i < jsonArray.length(); i++){
 		     JSONObject jsonItem = jsonArray.getJSONObject(i);
 
 		     String address = jsonItem.getString("url");
-		     String description = new StringBuilder(this)
+		     String description = new StringBuilder()
+                           .append("<br />")
 		           .append(jsonItem.getInt("term_count"))
+		           .append("<br />")
 		           .append(jsonItem.getLong("created_date"))
+		           .append("<br />")
 		           .append(jsonItem.getString("description"))
-		           .append(jsonItem.getString("created_by"));
+		           .append("<br />")
+		           .append(jsonItem.getString("created_by"))
+		           .toString();
 
 		     DownloadItem item = new DownloadItem(DownloadItem.ItemType.Database,
 		                        jsonItem.getString("title"),
