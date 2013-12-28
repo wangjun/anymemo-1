@@ -386,8 +386,6 @@ public class DownloaderQuizlet extends DownloaderBase implements ListView.OnScro
             StringBuilder sb = new StringBuilder();
             sb.append("<br />");
             sb.append(context.getString(R.string.author_text) + ": " + author + "<br />");
-
-
             sb.append(context.getString(R.string.creation_date_text) + ": " + creationDateString + "<br />");
             sb.append(context.getString(R.string.card_count_text) + ": " + cardCount + "<br /><br />");
             sb.append(description);
