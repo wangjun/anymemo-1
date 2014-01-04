@@ -379,7 +379,7 @@
     <string name="loading_auth_text">Authenticating with the server. Please wait...</string>
     <string name="auth_error_text">Authenticate error.</string>
     <string name="locale_italian_text">Italian</string>
-    <string name="upload_gdrive_message">Do you want to upload %s to your Google Drive\'s AnyMemo folder? It may take several minutes if you have more than 1000 cards.</string>
+    <string name="upload_gdrive_messagupload_gdrive_message">Do you want to upload %s to your Google Drive\'s AnyMemo folder? It may take several minutes if you have more than 1000 cards.</string>
     <string name="record_your_memo_text">Record your memo</string>
     <string name="max_recent_list_size_text">Max recent list size</string>
     <string name="recent_summary">Setup the max number of DBs to display in the recent list.</string>
@@ -465,5 +465,6 @@
     <string name="arabic_text">Arabic</string>
     <string name="unsupported_audio_locale_text">Selected audio language is not available for the current TTS engine.</string>
     <string name="tts_language_data_missing_text">The language data is missing for the current TTS language.</string>
-
+    <string name="upload_quizlet_message">Do you want to upload %s to your Quizlet account?</string>
+    <string name="quizlet_successfully_uploaded_message">Successfully uploaded to your Quizlet account!</string>
 </resources>
