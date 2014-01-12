@@ -1,15 +1,25 @@
 package org.liberty.android.fantastischmemo.downloader.quizlet;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.net.URL;
+import java.net.URLEncoder;
 
+import javax.net.ssl.HttpsURLConnection;
+
+import org.apache.commons.io.IOUtils;
 import org.liberty.android.fantastischmemo.R;
 import org.liberty.android.fantastischmemo.downloader.quizlet.QuizletAccountActivity;
 import org.liberty.android.fantastischmemo.ui.FileBrowserFragment;
 import org.liberty.android.fantastischmemo.utils.AMGUIUtility;
 
+import roboguice.util.Ln;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
@@ -35,6 +45,44 @@ public class QuizletUploadActivity extends QuizletAccountActivity {
         fragment.setOnFileClickListener(fileClickListener);
         ft.add(R.id.file_list, fragment);
         ft.commit();
+    }
+    
+    private void uploadToQuizlet(File file) {
+        try {
+            URL url1 = new URL("https://api.quizlet.com/2.0/sets");      
+     		HttpsURLConnection conn = (HttpsURLConnection) url1.openConnection();
+     		conn.setDoInput(true);
+       		conn.setDoOutput(true);
+    		conn.setRequestMethod("POST");
+    		conn.addRequestProperty("Authorization", "Bearer " + authToken);
+    		conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded"); 
+    		 
+    		OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream());
+    		StringBuilder data = new StringBuilder();
+    		data.append(String.format("whitespace=%s",URLEncoder.encode("1", "UTF-8")));
+    		data.append(String.format("&title=%s",URLEncoder.encode("123", "UTF-8")));
+    		data.append(String.format("&terms[]=%s",URLEncoder.encode("hello", "UTF-8")));
+    		data.append(String.format("&terms[]=%s",URLEncoder.encode("hello2", "UTF-8")));
+    		data.append(String.format("&definitions[]=%s",URLEncoder.encode("world", "UTF-8")));
+    		data.append(String.format("&definitions[]=%s",URLEncoder.encode("world2", "UTF-8")));
+    		data.append(String.format("&lang_terms=%s",URLEncoder.encode("en", "UTF-8")));
+    		data.append(String.format("&lang_definitions=%s",URLEncoder.encode("en", "UTF-8")));
+    		data.append(String.format("&allow_discussion=%s",URLEncoder.encode("true", "UTF-8")));
+    		            
+    		writer.write(data.toString());
+            writer.close();    		
+
+            if (conn.getResponseCode() / 100 >= 3) {
+            	throw new IOException("Response code " +  conn.getResponseCode());       
+            }
+            else {
+                Ln.i("The response is " + conn.getResponseCode());   
+                String s = new String(IOUtils.toByteArray(conn.getInputStream()));
+                Ln.i("Response is "+ s);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
     
     private FileBrowserFragment.OnFileClickListener fileClickListener =
@@ -80,7 +128,7 @@ public class QuizletUploadActivity extends QuizletAccountActivity {
                 public Exception doInBackground(File... files) {
                     File file = files[0];
                     try {
-                        
+                        uploadToQuizlet(file);                        
                     } catch (Exception e) {
                         Log.e(TAG, "Error uploading ", e);
                         return e;

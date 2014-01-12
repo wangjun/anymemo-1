@@ -22,7 +22,7 @@ public final class QuizletOAuth2AccessCodeRetrievalFragment extends OauthAccessC
             String uri = String.format("https://quizlet.com/authorize/?response_type=%s&client_id=%s&scope=%s&state=%s&redirect_uri=%s",
                     URLEncoder.encode("code", "UTF-8"),
                     URLEncoder.encode(AMEnv.QUIZLET_CLIENT_ID, "UTF-8"),
-                    URLEncoder.encode("read", "UTF-8"),
+                    URLEncoder.encode("read write_set", "UTF-8"),
                     URLEncoder.encode("login", "UTF-8"),
                     URLEncoder.encode(AMEnv.QUIZLET_REDIRECT_URI, "UTF-8"));
             Ln.i("Oauth request uri is " + uri);
