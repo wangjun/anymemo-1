@@ -21,15 +21,11 @@ import org.liberty.android.fantastischmemo.domain.Category;
 import org.liberty.android.fantastischmemo.domain.LearningData;
 import org.liberty.android.fantastischmemo.downloader.AbstractDownloaderFragment;
 import org.liberty.android.fantastischmemo.downloader.DownloadItem;
-import org.liberty.android.fantastischmemo.downloader.DownloaderQuizlet;
 import org.liberty.android.fantastischmemo.downloader.DownloaderUtils;
 import org.liberty.android.fantastischmemo.utils.AMFileUtil;
-import org.liberty.android.fantastischmemo.utils.RecentListUtil;
-
 import roboguice.util.Ln;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 
 public class CardsetsListFragment extends AbstractDownloaderFragment {
 	
