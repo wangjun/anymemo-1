@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 package org.liberty.android.fantastischmemo.ui;
 
-import java.util.Date;
 import java.util.HashMap;
 
 import javax.inject.Inject;
@@ -40,8 +39,6 @@ import org.liberty.android.fantastischmemo.ui.loader.DBLoader;
 import org.liberty.android.fantastischmemo.utils.DictionaryUtil;
 import org.liberty.android.fantastischmemo.utils.ShareUtil;
 
-import roboguice.util.RoboAsyncTask;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -61,6 +58,9 @@ import android.widget.Toast;
 
 import com.example.android.apis.graphics.FingerPaint;
 
+/**
+ * The StudyActivity is used for the classic way of learning cards.
+ */
 public class StudyActivity extends QACardActivity {
     public static String EXTRA_DBPATH = "dbpath";
     public static String EXTRA_CATEGORY_ID = "category_id";
@@ -207,9 +207,9 @@ public class StudyActivity extends QACardActivity {
                 return true;
 
             }
-            case R.id.menu_context_skip:
+            case R.id.menu_mark_as_learned_forever:
             {
-                showSkipDialog();
+                showMarkAsLearnedForeverDialog();
                 return true;
             }
             case R.id.menu_context_gotoprev:
@@ -633,38 +633,6 @@ public class StudyActivity extends QACardActivity {
         }
     }
 
-    // Task to change the card after a card is graded
-    // It needs to update the old card and dequeue the new card
-    // and display it.
-    private class ChangeCardTask extends RoboAsyncTask<Card> {
-
-        private Card updatedCard;
-
-        public ChangeCardTask(Context context, Card updatedCard) {
-            super(context);
-            this.updatedCard = updatedCard;
-        }
-
-        @Override
-        public Card call() throws Exception {
-            queueManager.update(updatedCard);
-
-            Card nextCard = queueManager.dequeue();
-            queueManager.remove(nextCard);
-
-            return nextCard;
-        }
-
-        public void onSuccess(Card result) {
-            if (result == null) {
-                showNoItemDialog();
-            } else {
-                setCurrentCard(result);
-                displayCard(false);
-            }
-        }
-    }
-
     // When a category is selected in category fragment.
     private CategoryEditorResultListener categoryResultListener =
         new CategoryEditorResultListener() {
@@ -696,10 +664,18 @@ public class StudyActivity extends QACardActivity {
                     }
                 }
 
-                // Run the task to update the updatedCard in the queue
-                // and dequeue the next card 
-                ChangeCardTask task = new ChangeCardTask(StudyActivity.this, updatedCard);
-                task.execute(); 
+                // Dequeue card and update the queue
+                queueManager.update(updatedCard);
+
+                Card nextCard = queueManager.dequeue();
+                queueManager.remove(nextCard);
+
+                if (nextCard == null) {
+                    showNoItemDialog();
+                } else {
+                    setCurrentCard(nextCard);
+                    displayCard(false);
+                }
             }
         };
 
@@ -714,13 +690,12 @@ public class StudyActivity extends QACardActivity {
         return sb.toString();
     }
 
-    private void skipCurrentCard() {
+    private void markCurrentCardAsLearnedForever() {
         if(getCurrentCard() != null) {
-            LearningData ld = getCurrentCard().getLearningData();
-            ld.setNextLearnDate(new Date(Long.MAX_VALUE));
-            ld.setAcqReps(1);
-            getDbOpenHelper().getLearningDataDao().update(ld);
-            // Do not restart this card
+            getDbOpenHelper().getLearningDataDao()
+                .markAsLearnedForever(getCurrentCard().getLearningData());
+
+            // Do not restart on this card
             setCurrentCard(null);
             restartActivity();
         }
@@ -770,13 +745,13 @@ public class StudyActivity extends QACardActivity {
             .show();
     }
 
-    private void showSkipDialog() {
+    private void showMarkAsLearnedForeverDialog() {
         new AlertDialog.Builder(this)
-            .setTitle(R.string.skip_text)
-            .setMessage(R.string.skip_warning)
+            .setTitle(R.string.mark_as_learned_forever_text)
+            .setMessage(R.string.mark_as_learned_forever_warning_text)
             .setPositiveButton(R.string.ok_text, new DialogInterface.OnClickListener(){
                 public void onClick(DialogInterface arg0, int arg1) {
-                    skipCurrentCard();
+                    markCurrentCardAsLearnedForever();
                 }
             })
         .setNegativeButton(R.string.cancel_text, null)

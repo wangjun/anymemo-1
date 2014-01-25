@@ -12,15 +12,12 @@ import org.liberty.android.fantastischmemo.utils.AnyMemoExecutor;
 import android.content.Intent;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.LargeTest;
-import android.view.View;
 
 import com.jayway.android.robotium.solo.Solo;
 
 public class StudyActivityFunctionTest extends ActivityInstrumentationTestCase2<StudyActivity> {
 
     protected StudyActivity mActivity;
-
-    private View answerView;
 
     @SuppressWarnings("deprecation")
     public StudyActivityFunctionTest() {
@@ -40,8 +37,6 @@ public class StudyActivityFunctionTest extends ActivityInstrumentationTestCase2<
 
         mActivity = this.getActivity();
 
-        answerView = mActivity.findViewById(R.id.answer);
-
         solo = new Solo(getInstrumentation(), mActivity);
         solo.waitForDialogToClose(8000);
         solo.sleep(600);
@@ -52,11 +47,11 @@ public class StudyActivityFunctionTest extends ActivityInstrumentationTestCase2<
 
 
         // Success 1st card
-        solo.clickOnView(answerView);
+        solo.clickOnText(solo.getString(R.string.memo_show_answer));
         solo.clickOnText(solo.getString(R.string.memo_btn2_text));
 
         // Success 2nd card
-        solo.clickOnView(answerView);
+        solo.clickOnText(solo.getString(R.string.memo_show_answer));
         solo.clickOnText(solo.getString(R.string.memo_btn2_text));
 
         // Undo
@@ -70,8 +65,7 @@ public class StudyActivityFunctionTest extends ActivityInstrumentationTestCase2<
         assertTrue(solo.searchText("hair"));
 
         // Fail 2nd card
-        answerView = solo.getCurrentActivity().findViewById(R.id.answer);
-        solo.clickOnView(answerView);
+        solo.clickOnText(solo.getString(R.string.memo_show_answer));
         solo.sleep(600);
         solo.clickOnText(solo.getString(R.string.memo_btn0_text));
 
@@ -95,7 +89,7 @@ public class StudyActivityFunctionTest extends ActivityInstrumentationTestCase2<
 
     @LargeTest
     public void testDeleteCard() throws Exception {
-        getInstrumentation().invokeMenuActionSync(mActivity, R.id.menu_context_delete, 0);
+        solo.clickOnActionBarItem(R.id.menu_context_delete);
         solo.clickOnText(solo.getString(R.string.ok_text));
         solo.goBack();
 
@@ -117,10 +111,9 @@ public class StudyActivityFunctionTest extends ActivityInstrumentationTestCase2<
     }
 
     @LargeTest
-    public void testSkipCard() throws Exception {
-        getInstrumentation().invokeMenuActionSync(mActivity, R.id.menu_context_skip, 0);
-        // press skip
-        solo.clickOnText(solo.getString(R.string.skip_text));
+    public void testMarkCardLearnedForever() throws Exception {
+        solo.clickOnActionBarItem(R.id.menu_mark_as_learned_forever);
+
         solo.clickOnText(solo.getString(R.string.ok_text));
 
         AnyMemoExecutor.waitAllTasks();
@@ -146,8 +139,7 @@ public class StudyActivityFunctionTest extends ActivityInstrumentationTestCase2<
 
     @LargeTest
     public void testGotoPreviewScreen() {
-        // press skip
-        getInstrumentation().invokeMenuActionSync(mActivity, R.id.menu_context_gotoprev, 0);
+        solo.clickOnActionBarItem(R.id.menu_context_gotoprev);
         assertTrue(solo.waitForActivity("PreviewEditActivity"));
         solo.sleep(1000);
     }
@@ -155,14 +147,14 @@ public class StudyActivityFunctionTest extends ActivityInstrumentationTestCase2<
     @LargeTest
     public void testGotoDetailScreen() {
         // The way to click menu item in action bar
-        getInstrumentation().invokeMenuActionSync(mActivity, R.id.menudetail, 0);
+        solo.clickOnActionBarItem(R.id.menudetail);
         assertTrue(solo.waitForActivity("DetailScreen"));
         solo.sleep(1000);
     }
 
     @LargeTest
     public void testGotoSettingsScreen() {
-        getInstrumentation().invokeMenuActionSync(mActivity, R.id.menusettings, 0);
+        solo.clickOnActionBarItem(R.id.menusettings);
         assertTrue(solo.waitForActivity("SettingsScreen"));
         solo.sleep(1000);
     }

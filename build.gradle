@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.6.+'
+        classpath 'com.android.tools.build:gradle:0.8.+'
     }
 }
 
@@ -21,10 +21,35 @@ android {
     buildToolsVersion "19.0.0"
 
     defaultConfig {
+        versionCode 197
+        versionName "10.3.992"
         minSdkVersion 9
         targetSdkVersion 16
         testPackageName "org.liberty.android.fantastischmemo.test"
         testInstrumentationRunner "android.test.InstrumentationTestRunner"
+    }
+
+    buildTypes {
+        debug {
+            versionNameSuffix "-${getBuildString()}"
+        }
+    }
+
+    productFlavors {
+        free {
+            packageName "org.liberty.android.fantastischmemo"
+        }
+        pro {
+            packageName "org.liberty.android.fantastischmemopro"
+        }
+    }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
     }
 
     sourceSets {
@@ -36,6 +61,14 @@ android {
             renderscript.srcDirs = ['src']
             res.srcDirs = ['res']
             assets.srcDirs = ['assets']
+        }
+
+        free {
+            res.srcDirs = ['src-flavors/free/res']
+        }
+
+        pro {
+            res.srcDirs = ['src-flavors/pro/res']
         }
 
         // Move the tests to tests/java, tests/res, etc...
@@ -63,13 +96,12 @@ ext.aspectjVersion = '1.7.3'
 
 dependencies {
     compile fileTree(dir: 'libs', include: '*.jar')
-    instrumentTestCompile  fileTree(dir: 'test/libs', include: '*.jar')
 
     ajc "org.aspectj:aspectjtools:${aspectjVersion}"
     compile "org.aspectj:aspectjrt:${aspectjVersion}"
-    compile 'com.android.support:appcompat-v7:19.0.0'
-    compile 'com.j256.ormlite:ormlite-core:4.47'
-    compile 'com.j256.ormlite:ormlite-android:4.47'
+    compile 'com.android.support:appcompat-v7:19.0.+'
+    compile 'com.j256.ormlite:ormlite-core:4.48'
+    compile 'com.j256.ormlite:ormlite-android:4.48'
     compile ('org.roboguice:roboguice:2.0') {
         exclude module: 'aopalliance'
         exclude module: 'cglib'
@@ -94,13 +126,6 @@ dependencies {
     }
     instrumentTestCompile 'org.mockito:mockito-all:1.9.5'
     instrumentTestCompile 'com.jayway.android.robotium:robotium-solo:4.3.1'
-}
-
-android.applicationVariants.all { variant ->
-    variant.javaCompile.doLast {
-        // Find the android.jar and add to iajc classpath
-        def androidSdk = android.adbExe.parent + "/../platforms/" + android.compileSdkVersion + "/android.jar"
-    }
 }
 
 android.applicationVariants.all { variant ->
@@ -130,8 +155,6 @@ android.applicationVariants.all { variant ->
                 source:sourceCompatibility,
                 target:targetCompatibility,
                 destDir:"${project.buildDir}/classes/${variant.dirName}",
-                maxmem:"512m",
-                fork:"true",
                 aspectPath:configurations.aspects.asPath,
                 inpath:configurations.ajInpath.asPath,
                 sourceRootCopyFilter:"**/.svn/*,**/*.java",
@@ -141,8 +164,18 @@ android.applicationVariants.all { variant ->
                 android.sourceSets.main.java.srcDirs.each{
                     pathelement(location:it.absolutePath)
                 }
+                // Build config file
+                pathelement(location:"${project.buildDir}/source/buildConfig/${variant.dirName}")
+
+                // Android resources R.***
                 pathelement(location:"${project.buildDir}/source/r/${variant.dirName}")
             }
         }
     }
+}
+
+def getBuildString () {
+    def date = new Date()
+    def formattedDate = date.format('yyMMdd')
+    return "b" + formattedDate
 }

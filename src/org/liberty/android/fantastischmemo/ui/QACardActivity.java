@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 package org.liberty.android.fantastischmemo.ui;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -27,6 +28,7 @@ import javax.inject.Inject;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.liberty.android.fantastischmemo.AMActivity;
+import org.liberty.android.fantastischmemo.AMEnv;
 import org.liberty.android.fantastischmemo.AnyMemoDBOpenHelper;
 import org.liberty.android.fantastischmemo.AnyMemoDBOpenHelperManager;
 import org.liberty.android.fantastischmemo.R;
@@ -35,11 +37,9 @@ import org.liberty.android.fantastischmemo.domain.Option;
 import org.liberty.android.fantastischmemo.domain.Setting;
 import org.liberty.android.fantastischmemo.service.AnyMemoService;
 import org.liberty.android.fantastischmemo.ui.loader.CardTTSUtilLoader;
-import org.liberty.android.fantastischmemo.ui.loader.CardTextUtilLoader;
 import org.liberty.android.fantastischmemo.ui.loader.MultipleLoaderManager;
 import org.liberty.android.fantastischmemo.ui.loader.SettingLoader;
 import org.liberty.android.fantastischmemo.utils.CardTTSUtil;
-import org.liberty.android.fantastischmemo.utils.CardTextUtil;
 
 import roboguice.util.Ln;
 
@@ -54,14 +54,21 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.text.ClipboardManager;
-import android.text.Spannable;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
 
+/**
+ * The base class for all activities that displays cards.
+ *
+ * To use this class, subclass it and call the startInit() in the onCreate() method.
+ * onPostInit() is used for customized initialization. Additionally, the caller can register
+ * a Loader that needs loading asynchronized. Call getMultipleLoaderManager() and register the loaders
+ * before calling startInit().
+ *
+ * Override getContentView() for loading a customized layout that is compatible with qa_card_layout.
+ */
 @SuppressWarnings("deprecation")
 public abstract class QACardActivity extends AMActivity {
     public static String EXTRA_DBPATH = "dbpath";
@@ -72,17 +79,18 @@ public abstract class QACardActivity extends AMActivity {
 
     private AnyMemoDBOpenHelper dbOpenHelper;
 
-    /* DAOs */
     private Card currentCard;
 
-    private int animationInResId = 0;
-    private int animationOutResId = 0;
+    /**
+     * The card may not be displayed immediate after setting.
+     * The currentDisplayedCard stores the current displayed card in the view.
+     * It is used for animation purpose.
+     */
+    private Card currentDisplayedCard = null;
 
     private static final int SETTING_LOADER_ID = 0;
 
     private static final int CARD_TTS_UTIL_LOADER_ID = 1;
-
-    private static final int CARD_TEXT_UTIL_LOADER_ID = 2;
 
     private Option option;
 
@@ -93,8 +101,6 @@ public abstract class QACardActivity extends AMActivity {
     private TextView smallTitleBar;
 
     private CardTTSUtil cardTTSUtil;
-
-    private CardTextUtil cardTextUtil;
 
     private GestureLibrary gestureLibrary;
 
@@ -130,44 +136,44 @@ public abstract class QACardActivity extends AMActivity {
         return multipleLoaderManager;
     }
 
-
     @Override
     public void onCreate(Bundle bundle) {
         super.onCreate(bundle);
         setContentView(getContentView());
-
     }
 
     /**
      * Call this method to start the initialization process.
      * Must be called in UI thread.
      */
-    public void startInit() {
+    public final void startInit() {
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             dbPath = extras.getString(EXTRA_DBPATH);
         }
 
         dbOpenHelper = AnyMemoDBOpenHelperManager.getHelper(this, dbPath);
-        dbName = FilenameUtils.getName(dbPath);
 
         dbPath = extras.getString(EXTRA_DBPATH);
 
-        // Set teh default animation
-        animationInResId = R.anim.slide_left_in;
-        animationOutResId = R.anim.slide_left_out;
+        dbName = FilenameUtils.getName(dbPath);
 
         // Load gestures
         loadGestures();
 
-        multipleLoaderManager.registerLoaderCallbacks(SETTING_LOADER_ID, new SettingLoaderCallbacks(), false);
-        multipleLoaderManager.registerLoaderCallbacks(CARD_TTS_UTIL_LOADER_ID, new CardTTSUtilLoaderCallbacks(), true);
-        multipleLoaderManager.registerLoaderCallbacks(CARD_TEXT_UTIL_LOADER_ID, new CardTextUtilLoaderCallbacks(), true);
-        multipleLoaderManager.setOnAllLoaderCompletedRunnable(onPostInitRunnable);
+        multipleLoaderManager.registerLoaderCallbacks(SETTING_LOADER_ID,
+                new SettingLoaderCallbacks(), false);
+        multipleLoaderManager.registerLoaderCallbacks(CARD_TTS_UTIL_LOADER_ID,
+                new CardTTSUtilLoaderCallbacks(), true);
+        multipleLoaderManager
+                .setOnAllLoaderCompletedRunnable(onPostInitRunnable);
         multipleLoaderManager.startLoading();
     }
-    
-    public int getContentView() {
+
+    /**
+     * Override to load customized layout.
+     */
+    protected int getContentView() {
         return R.layout.qa_card_layout;
     }
 
@@ -211,99 +217,74 @@ public abstract class QACardActivity extends AMActivity {
             answerTypefaceValue = answerTypeface;
         }
 
-        // Handle the QA ratio
-        LinearLayout questionLayout = (LinearLayout) findViewById(R.id.question);
-        LinearLayout answerLayout = (LinearLayout) findViewById(R.id.answer);
-        float qRatio = setting.getQaRatio();
-        if (qRatio > 99.0f) {
-            answerLayout.setVisibility(View.GONE);
-            questionLayout
-                    .setLayoutParams(new LayoutParams(
-                            LayoutParams.MATCH_PARENT,
-                            LayoutParams.MATCH_PARENT, 1.0f));
-            answerLayout
-                    .setLayoutParams(new LayoutParams(
-                            LayoutParams.MATCH_PARENT,
-                            LayoutParams.MATCH_PARENT, 1.0f));
-        } else if (qRatio < 1.0f) {
-            questionLayout.setVisibility(View.GONE);
-            questionLayout
-                    .setLayoutParams(new LayoutParams(
-                            LayoutParams.MATCH_PARENT,
-                            LayoutParams.MATCH_PARENT, 1.0f));
-            answerLayout
-                    .setLayoutParams(new LayoutParams(
-                            LayoutParams.MATCH_PARENT,
-                            LayoutParams.MATCH_PARENT, 1.0f));
-        } else {
-            questionLayout.setLayoutParams(new LayoutParams(
-                    LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT,
-                    qRatio));
-            answerLayout.setLayoutParams(new LayoutParams(
-                    LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT,
-                    100f - qRatio));
-        }
+        String[] imageSearchPaths = {
+            /* Relative path */
+            "",
+            /* Relative path with db name */
+            "" + FilenameUtils.getName(dbPath),
+            /* Try the image in /sdcard/anymemo/images/dbname/ */
+            AMEnv.DEFAULT_IMAGE_PATH + FilenameUtils.getName(dbPath),
+            /* Try the image in /sdcard/anymemo/images/ */
+            AMEnv.DEFAULT_IMAGE_PATH,
+        };
 
         // Buttons view can be null if it is not decleared in the layout XML
         View buttonsView = findViewById(R.id.buttons_root);
 
-        // Make sure the buttons view are also handling the event for the answer view
-        // e. g. clicking on the blank area of the buttons layout to reveal the answer
-        // or flip the card.
         if (buttonsView != null) {
+            // Make sure the buttons view are also handling the event for the answer view
+            // e. g. clicking on the blank area of the buttons layout to reveal the answer
+            // or flip the card.
             buttonsView.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     onQuestionViewClickListener.onClick(v);
                 }
             });
-        }
-        // Double sided card has no animation and no horizontal line
-        if (setting.getCardStyle() == Setting.CardStyle.DOUBLE_SIDED) {
-            if (showAnswer) {
-                findViewById(R.id.question).setVisibility(View.GONE);
-                findViewById(R.id.answer).setVisibility(View.VISIBLE);
 
-                // Also the buttons should match the color.
-                // Do not change color if the color is the default color,
-                // AnyMemo will use the theme's color instead.
-                if (buttonsView != null && !setting.isDefaultColor()) {
+            // Also the buttons should match the color of the view above.
+            // It could be the question if it is the double sided card with only question shown
+            // or answer view's color.
+            if (!setting.isDefaultColor()) {
+                if (setting.getCardStyle() == Setting.CardStyle.DOUBLE_SIDED && !showAnswer) {
                     buttonsView.setBackgroundColor(setting
-                            .getAnswerBackgroundColor());
-                }
-            } else {
-                findViewById(R.id.question).setVisibility(View.VISIBLE);
-                findViewById(R.id.answer).setVisibility(View.GONE);
-
-                // Also the buttons should match the color.
-                if (buttonsView != null && !setting.isDefaultColor()) {
+                        .getQuestionBackgroundColor());
+                } else {
                     buttonsView.setBackgroundColor(setting
-                            .getQuestionBackgroundColor());
+                        .getAnswerBackgroundColor());
                 }
             }
-            findViewById(R.id.horizontal_line).setVisibility(View.GONE);
         }
 
-        // Set the color of the horizontal line
-        View horizontalLine = findViewById(R.id.horizontal_line);
-        horizontalLine.setBackgroundColor(setting.getSeparatorColor());
+        CardFragment.Builder questionFragmentBuilder = new CardFragment.Builder(getCurrentCard().getQuestion())
+            .setTextAlignment(questionAlign)
+            .setTypefaceFromFile(questionTypefaceValue)
+            .setTextOnClickListener(onQuestionTextClickListener)
+            .setCardOnClickListener(onQuestionViewClickListener)
+            .setTextFontSize(setting.getQuestionFontSize())
+            .setTypefaceFromFile(setting.getQuestionFont())
+            .setDisplayInHtml(setting.getDisplayInHTMLEnum().contains(Setting.CardField.QUESTION))
+            .setHtmlLinebreakConversion(setting.getHtmlLineBreakConversion())
+            .setImageSearchPaths(imageSearchPaths);
 
-        List<Spannable> spannableFields = cardTextUtil
-                .getFieldsToDisplay(getCurrentCard());
 
-        // Question spannable
-        Spannable sq = spannableFields.get(0);
+        CardFragment.Builder answerFragmentBuilder = new CardFragment.Builder(getCurrentCard().getAnswer())
+            .setTextAlignment(answerAlign)
+            .setTypefaceFromFile(answerTypefaceValue)
+            .setTextOnClickListener(onAnswerTextClickListener)
+            .setCardOnClickListener(onAnswerViewClickListener)
+            .setTextFontSize(setting.getAnswerFontSize())
+            .setTypefaceFromFile(setting.getAnswerFont())
+            .setDisplayInHtml(setting.getDisplayInHTMLEnum().contains(Setting.CardField.ANSWER))
+            .setHtmlLinebreakConversion(setting.getHtmlLineBreakConversion())
+            .setImageSearchPaths(imageSearchPaths);
 
-        // Answer spannable
-        Spannable sa = spannableFields.get(1);
-
-        // Finally we generate the fragments
-        CardFragment.Builder questionFragmentBuilder = new CardFragment.Builder(sq)
-                .setTextAlignment(questionAlign)
-                .setTypefaceFromFile(questionTypefaceValue)
-                .setTextOnClickListener(onQuestionTextClickListener)
-                .setCardOnClickListener(onQuestionViewClickListener)
-                .setTextFontSize(setting.getQuestionFontSize())
-                .setTypefaceFromFile(setting.getQuestionFont());
+        CardFragment.Builder showAnswerFragmentBuilder = new CardFragment.Builder("?\n" + getString(R.string.memo_show_answer))
+            .setTextAlignment(Setting.Align.CENTER)
+            .setTypefaceFromFile(answerTypefaceValue)
+            .setTextOnClickListener(onAnswerTextClickListener)
+            .setCardOnClickListener(onAnswerViewClickListener)
+            .setTextFontSize(setting.getAnswerFontSize())
+            .setTypefaceFromFile(setting.getAnswerFont());
 
         // For default card colors, we will use the theme's color
         // so we do not set the colors here.
@@ -311,72 +292,97 @@ public abstract class QACardActivity extends AMActivity {
             questionFragmentBuilder
                 .setTextColor(setting.getQuestionTextColor())
                 .setBackgroundColor(setting.getQuestionBackgroundColor());
-        }
-        CardFragment questionFragment = questionFragmentBuilder.build();
-
-        CardFragment.Builder answerFragmentBuilder = null;
-
-        if (setting.getCardStyle() == Setting.CardStyle.DOUBLE_SIDED
-                || showAnswer) {
-            answerFragmentBuilder = new CardFragment.Builder(sa)
-                    .setTextAlignment(answerAlign)
-                    .setTypefaceFromFile(answerTypefaceValue)
-                    .setTextOnClickListener(onAnswerTextClickListener)
-                    .setCardOnClickListener(onAnswerViewClickListener)
-                    .setTextFontSize(setting.getAnswerFontSize())
-                    .setTypefaceFromFile(setting.getAnswerFont());
-        } else {
-            // For "Show answer" text, we do not use the
-            // alignment from the settings.
-            // It is always center aligned
-            answerFragmentBuilder = new CardFragment.Builder(
-                    getString(R.string.memo_show_answer))
-                    .setTextAlignment(Setting.Align.CENTER)
-                    .setTypefaceFromFile(answerTypefaceValue)
-                    .setTextOnClickListener(onAnswerTextClickListener)
-                    .setCardOnClickListener(onAnswerViewClickListener)
-                    .setTextFontSize(setting.getAnswerFontSize())
-                    .setTypefaceFromFile(setting.getAnswerFont());
-        }
-
-        if (!setting.isDefaultColor()) {
             answerFragmentBuilder
-                    .setTextColor(setting.getAnswerTextColor())
-                    .setBackgroundColor(setting.getAnswerBackgroundColor());
+                .setTextColor(setting.getAnswerTextColor())
+                .setBackgroundColor(setting.getAnswerBackgroundColor());
+            showAnswerFragmentBuilder
+                .setTextColor(setting.getAnswerTextColor())
+                .setBackgroundColor(setting.getAnswerBackgroundColor());
         }
 
-        CardFragment answerFragment = answerFragmentBuilder.build();
+        // Note is currently shared some settings with Answer
+        CardFragment.Builder noteFragmentBuilder = new CardFragment.Builder(getCurrentCard().getNote())
+            .setTextAlignment(answerAlign)
+            .setTypefaceFromFile(answerTypefaceValue)
+            .setCardOnClickListener(onAnswerViewClickListener)
+            .setTextFontSize(setting.getAnswerFontSize())
+            .setTypefaceFromFile(setting.getAnswerFont())
+            .setDisplayInHtml(setting.getDisplayInHTMLEnum().contains(Setting.CardField.ANSWER))
+            .setHtmlLinebreakConversion(setting.getHtmlLineBreakConversion())
+            .setImageSearchPaths(imageSearchPaths);
 
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
 
-        if (setting.getCardStyle() != Setting.CardStyle.DOUBLE_SIDED
-                && option.getEnableAnimation()) {
-            if (isAnswerShown == false && showAnswer == true) {
-                // No animation here.
-            } else {
-                ft.setCustomAnimations(animationInResId, animationOutResId);
+        if (setting.getCardStyle() == Setting.CardStyle.SINGLE_SIDED) {
+            TwoFieldsCardFragment fragment = new TwoFieldsCardFragment();
+            Bundle b = new Bundle();
+
+            // Handle card field setting.
+            List<CardFragment.Builder> builders1List = new ArrayList<CardFragment.Builder>(4);
+            if (setting.getQuestionFieldEnum().contains(Setting.CardField.QUESTION)) {
+                builders1List.add(questionFragmentBuilder);
             }
-        }
-        ft.replace(R.id.question, questionFragment);
-        ft.commit();
-
-        ft = getSupportFragmentManager().beginTransaction();
-
-        if (option.getEnableAnimation()) {
-            if (setting.getCardStyle() != Setting.CardStyle.DOUBLE_SIDED) {
-                if (isAnswerShown == false && showAnswer == true) {
-                    ft.setCustomAnimations(0, R.anim.slide_down);
-                } else {
-                    ft.setCustomAnimations(animationInResId, animationOutResId);
-                }
-            } else {
-                // Animation for double sided cards
-                // Current no animation
+            if (setting.getQuestionFieldEnum().contains(Setting.CardField.ANSWER)) {
+                builders1List.add(answerFragmentBuilder);
             }
-        }
+            if (setting.getQuestionFieldEnum().contains(Setting.CardField.NOTE)) {
+                builders1List.add(noteFragmentBuilder);
+            }
 
-        ft.replace(R.id.answer, answerFragment);
-        ft.commit();
+            List<CardFragment.Builder> builders2List = new ArrayList<CardFragment.Builder>(4);
+            if (!showAnswer) {
+                builders2List.add(showAnswerFragmentBuilder);
+            }
+            if (setting.getAnswerFieldEnum().contains(Setting.CardField.QUESTION)) {
+                builders2List.add(questionFragmentBuilder);
+            }
+            if (setting.getAnswerFieldEnum().contains(Setting.CardField.ANSWER)) {
+                builders2List.add(answerFragmentBuilder);
+            }
+            if (setting.getAnswerFieldEnum().contains(Setting.CardField.NOTE)) {
+                builders2List.add(noteFragmentBuilder);
+            }
+
+            CardFragment.Builder[] builders1 = new CardFragment.Builder[builders1List.size()];
+            builders1List.toArray(builders1);
+            CardFragment.Builder[] builders2 = new CardFragment.Builder[builders2List.size()];
+            builders2List.toArray(builders2);
+
+            b.putSerializable(TwoFieldsCardFragment.EXTRA_FIELD1_CARD_FRAGMENT_BUILDERS, builders1);
+            b.putSerializable(TwoFieldsCardFragment.EXTRA_FIELD2_CARD_FRAGMENT_BUILDERS, builders2);
+            if (showAnswer) {
+                b.putInt(TwoFieldsCardFragment.EXTRA_FIELD2_INITIAL_POSITION, 0);
+            } else {
+                b.putInt(TwoFieldsCardFragment.EXTRA_FIELD2_INITIAL_POSITION, 0);
+            }
+            b.putInt(TwoFieldsCardFragment.EXTRA_QA_RATIO, setting.getQaRatio());
+            b.putInt(TwoFieldsCardFragment.EXTRA_SEPARATOR_COLOR, setting.getSeparatorColor());
+            fragment.setArguments(b);
+
+            configCardFragmentTransitionAnimation(ft);
+
+            ft.replace(R.id.card_root, fragment);
+            ft.commit();
+        } else if (setting.getCardStyle() == Setting.CardStyle.DOUBLE_SIDED) {
+            FlipableCardFragment fragment = new FlipableCardFragment();
+            Bundle b = new Bundle(1);
+            CardFragment.Builder[] builders = {questionFragmentBuilder, answerFragmentBuilder, noteFragmentBuilder};
+            b.putSerializable(FlipableCardFragment.EXTRA_CARD_FRAGMENT_BUILDERS, builders);
+            if (showAnswer) {
+                b.putInt(FlipableCardFragment.EXTRA_INITIAL_POSITION, 1);
+            } else {
+                b.putInt(FlipableCardFragment.EXTRA_INITIAL_POSITION, 0);
+            }
+
+            fragment.setArguments(b);
+
+            configCardFragmentTransitionAnimation(ft);
+
+            ft.replace(R.id.card_root, fragment);
+            ft.commit();
+        } else {
+            assert false : "Card logic not implemented for style: " + setting.getCardStyle();
+        }
 
         isAnswerShown = showAnswer;
 
@@ -391,6 +397,8 @@ public abstract class QACardActivity extends AMActivity {
         if (showAnswer == true) {
             copyToClipboard();
         }
+
+        currentDisplayedCard = getCurrentCard();
 
         onPostDisplayCard();
     }
@@ -411,7 +419,9 @@ public abstract class QACardActivity extends AMActivity {
         return option;
     }
 
-    // Called when the initalizing finished.
+    /**
+     * Called the loaders are done. Override it for customized initialization
+     */
     protected void onPostInit() {
         View buttonsView = findViewById(R.id.buttons_root);
         if (buttonsView != null && !setting.isDefaultColor()) {
@@ -419,18 +429,6 @@ public abstract class QACardActivity extends AMActivity {
                     .getAnswerBackgroundColor());
         }
 
-    }
-
-    // Called when the initalizing finished.
-    protected void onInit() throws Exception {
-        // Do nothing
-
-    }
-
-    // Set the card animation, 0 = no animation
-    protected void setAnimation(int animationInResId, int animationOutResId) {
-        this.animationInResId = animationInResId;
-        this.animationOutResId = animationOutResId;
     }
 
     private class SettingLoaderCallbacks implements
@@ -472,26 +470,6 @@ public abstract class QACardActivity extends AMActivity {
 
         @Override
         public void onLoaderReset(Loader<CardTTSUtil> arg0) {
-            // Do nothing now
-        }
-    }
-
-    private class CardTextUtilLoaderCallbacks implements
-            LoaderManager.LoaderCallbacks<CardTextUtil> {
-        @Override
-        public Loader<CardTextUtil> onCreateLoader(int arg0, Bundle arg1) {
-             Loader<CardTextUtil> loader = new CardTextUtilLoader(QACardActivity.this, dbPath);
-             loader.forceLoad();
-             return loader;
-        }
-
-        @Override
-        public void onLoadFinished(Loader<CardTextUtil> loader , CardTextUtil cardTextUtil) {
-            QACardActivity.this.cardTextUtil = cardTextUtil;
-            multipleLoaderManager.checkAllLoadersCompleted();
-        }
-        @Override
-        public void onLoaderReset(Loader<CardTextUtil> arg0) {
             // Do nothing now
         }
     }
@@ -672,6 +650,27 @@ public abstract class QACardActivity extends AMActivity {
             onPostInit();
         }
     };
+
+    /**
+     * Configure the animation for the card transition in a fragment transaction.
+     */
+    private void configCardFragmentTransitionAnimation(FragmentTransaction ft) {
+        if (option.getEnableAnimation()) {
+            // The first card to display.
+            if (currentDisplayedCard == null) {
+                // Android support library bug prevent the exit animation displayed for nested fragment.
+                // So the R.anim.slide_right_out is not actaully used.
+                ft.setCustomAnimations(R.anim.slide_left_in, R.anim.slide_left_out);
+            } else if (currentDisplayedCard.getOrdinal() > currentCard.getOrdinal()) {
+                // Make sure the animation is the in the right direction.
+                ft.setCustomAnimations(R.anim.slide_right_in, R.anim.slide_right_out);
+            } else if (currentDisplayedCard.getOrdinal() < currentCard.getOrdinal()){
+                ft.setCustomAnimations(R.anim.slide_left_in, R.anim.slide_left_out);
+            } else {
+                // No animation for not changing the card.
+            }
+        }
+    }
 
     private CardFragment.OnClickListener onQuestionTextClickListener = new CardFragment.OnClickListener() {
 

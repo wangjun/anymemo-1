@@ -25,19 +25,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import javax.inject.Inject;
-
-import android.content.Context;
-
 import com.google.inject.BindingAnnotation;
 
 public class TabTxtExporter extends CSVExporter {
 
     private static final long serialVersionUID = 6409640721615190795L;
 
-    @Inject
-    public TabTxtExporter(Context context, Character separator) {
-        super(context, separator);
+    public TabTxtExporter() {
+        super('\t');
     }
 
     @Override

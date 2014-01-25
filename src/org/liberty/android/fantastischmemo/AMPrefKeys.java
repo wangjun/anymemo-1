@@ -96,7 +96,7 @@ public class AMPrefKeys {
         return "recentdbpath" + ord;
     }
 
-    public static final String SAVED_VERSION_KEY = "saved_version";
+    public static final String SAVED_VERSION_CODE_KEY = "saved_version_code";
 
     public static final String SAVED_FILEBROWSER_PATH_KEY = "saved_fb_path";
 
@@ -116,7 +116,7 @@ public class AMPrefKeys {
     // public static final String
 
     // List edit screen
-    public static final String LIST_EDIT_SCREEN_PREFIX = "ListEditScreen";
+    public static final String LIST_EDIT_SCREEN_PREFIX = "CardListActivity";
 
     // AMActivity
     public static final String INTERFACE_LOCALE_KEY = "interface_locale";
@@ -147,4 +147,6 @@ public class AMPrefKeys {
     public static final String PREVIEW_EDIT_START_ID_PREFIX = "preview_edit_start_id_prefix";
     
     public static final String LIST_SORT_BY_METHOD_PREFIX = "list_sort_by_method_prefix";
+
+    public static final String LIST_ANSWER_VISIBLE_PREFIX  = "list_answer_visible";
 }

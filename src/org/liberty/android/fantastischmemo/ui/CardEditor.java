@@ -88,7 +88,6 @@ public class CardEditor extends AMActivity {
     public static String EXTRA_CARD_ID = "id";
     public static String EXTRA_RESULT_CARD_ID= "result_card_id";
     public static String EXTRA_IS_EDIT_NEW = "is_edit_new";
-    public static final String EXTRA_AUDIO_FILENAME = "audioFilename";
 
 
     @Override
@@ -128,15 +127,20 @@ public class CardEditor extends AMActivity {
                 .setMessage(R.string.edit_dialog_unsave_warning)
                 .setPositiveButton(R.string.yes_text, new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface  d, int which){
-                        Intent resultIntent = new Intent();
-                        setResult(Activity.RESULT_CANCELED, resultIntent);
-                        finish();
-
+                        SaveCardTask task = new SaveCardTask();
+                        task.execute((Void)null);
                     }
                 })
-            .setNegativeButton(R.string.no_text, null)
-                .create()
-                .show();
+            .setNeutralButton(R.string.no_text, new DialogInterface.OnClickListener(){
+                public void onClick(DialogInterface  d, int which){
+                    Intent resultIntent = new Intent();
+                    setResult(Activity.RESULT_CANCELED, resultIntent);
+                    finish();
+                }
+            })
+            .setNegativeButton(R.string.cancel_text, null)
+            .create()
+            .show();
 
         }
         else{
@@ -278,7 +282,7 @@ public class CardEditor extends AMActivity {
          String audioFilename = AMEnv.DEFAULT_AUDIO_PATH + dbName;
          new File(audioFilename).mkdirs();
          AudioRecorderFragment recorder = new AudioRecorderFragment();
-         if(focusView == questionEdit){
+         if (focusView == questionEdit) {
              audioFilename +=  "/"+ currentCardId + "_q.3gp";
          } else if (focusView == answerEdit) {
              audioFilename +=  "/"+ currentCardId + "_a.3gp";
@@ -286,7 +290,7 @@ public class CardEditor extends AMActivity {
              return;
          }
          Bundle b = new Bundle();
-         b.putString(EXTRA_AUDIO_FILENAME, audioFilename);
+         b.putString(AudioRecorderFragment.EXTRA_AUDIO_FILENAME, audioFilename);
 
          recorder.setAudioRecorderResultListener(new AudioRecorderResultListener() {
              public void onReceiveAudio() {

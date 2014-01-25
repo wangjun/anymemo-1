@@ -2,13 +2,13 @@
 
 <LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:anymemo="http://schemas.android.com/apk/res/org.liberty.android.fantastischmemo"
+        xmlns:anymemo="http://schemas.android.com/apk/res-auto"
         android:id="@+id/category_dialog_root"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:orientation="vertical">
     <LinearLayout
-            android:layout_height="fill_parent"
+            android:layout_height="0dp"
             android:layout_width="fill_parent"
             android:layout_weight="1"
             android:orientation="vertical">
@@ -29,7 +29,7 @@
                     android:id="@+id/button_new"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/add_screen_new"
+                    android:text="@string/new_text"
                     android:layout_weight="1"
                     android:layout_marginLeft="2dip"
                     android:layout_marginRight="2dip" />

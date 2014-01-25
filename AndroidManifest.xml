@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.liberty.android.fantastischmemo"
-    android:installLocation="auto"
-    android:versionCode="196"
-    android:versionName="@string/app_version">
+    android:installLocation="auto">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -42,9 +41,6 @@
             android:name=".downloader.FELauncher"
             android:configChanges="orientation|keyboardHidden" />
         <activity
-            android:name=".downloader.FEUpload"
-            android:configChanges="orientation|keyboardHidden" />
-        <activity
             android:name=".downloader.FEDirectory"
             android:configChanges="orientation|keyboardHidden" />
         <activity
@@ -79,8 +75,7 @@
         <activity 
             android:name=".ui.SettingsScreen" />
         <activity
-            android:name=".ui.ListEditScreen"
-            android:configChanges="orientation|keyboardHidden" />
+            android:name=".ui.CardListActivity" />
         <activity 
             android:name=".ui.FileBrowserActivity"
             android:configChanges="orientation|keyboardHidden" />
@@ -96,9 +91,21 @@
             android:name=".ui.StatisticsScreen"
             android:configChanges="orientation|keyboardHidden" />
         <activity 
-            android:name=".ui.StudyActivity" />
+            android:name=".ui.StudyActivity"
+            android:parentActivityName=".ui.AnyMemo">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ui.AnyMemo" />
+        </activity>
+
         <activity 
-            android:name=".ui.PreviewEditActivity" />
+            android:name=".ui.PreviewEditActivity"
+            android:parentActivityName=".ui.AnyMemo">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ui.AnyMemo" />
+        </activity>
+
         <activity 
             android:name=".ui.QuizActivity" />
         <activity 
@@ -131,36 +138,21 @@
                     <data android:mimeType="text/*" />
             </intent-filter>
         </activity>
-        <activity
-            android:launchMode="singleTop"
-            android:name=".downloader.FEOauth">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="anymemo-fe"/>
-            </intent-filter>
-        </activity>
         <service
-            android:name="org.liberty.android.fantastischmemo.service.AnyMemoService" />
-
+            android:name=".service.AnyMemoService" />
         <service
             android:name=".service.CardPlayerService" />
-
+        <service
+            android:name=".service.ConvertIntentService" />
         <provider
                 android:name=".provider.CardProvider"
                 android:authorities="org.liberty.android.fantastischmemo.cardprovider"
                 android:exported="true"
                 android:multiprocess="true" />
-
         <provider
                 android:name=".provider.DatabasesProvider"
                 android:authorities="org.liberty.android.fantastischmemo.databasesprovider"
                 android:exported="true"
                 android:multiprocess="true" />
-
     </application>
-
-    <uses-sdk android:minSdkVersion="9" android:targetSdkVersion="16" />
-
 </manifest> 

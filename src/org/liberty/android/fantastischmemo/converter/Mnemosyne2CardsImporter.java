@@ -56,8 +56,6 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
-import android.content.Context;
-
 import com.google.inject.BindingAnnotation;
 
 public class Mnemosyne2CardsImporter implements Converter {
@@ -70,14 +68,7 @@ public class Mnemosyne2CardsImporter implements Converter {
 
     private static final int LEARNING_DATA_FIELD_TYPE = 6;
 
-    private Context mContext;
-
     private AMFileUtil amFileUtil;
-
-    @Inject
-    public Mnemosyne2CardsImporter(Context context) {
-        mContext = context;
-    }
 
     @Inject
     public void setAmFileUtil(AMFileUtil amFileUtil) {
@@ -111,7 +102,7 @@ public class Mnemosyne2CardsImporter implements Converter {
 
             // Before opening dest. Try to backup and delete the dest db.
             amFileUtil.deleteFileWithBackup(dest);
-            helper = AnyMemoDBOpenHelperManager.getHelper(mContext, dest);
+            helper = AnyMemoDBOpenHelperManager.getHelper(dest);
             CardDao cardDao = helper.getCardDao();
             cardDao.createCards(cardList);
 
@@ -239,6 +230,16 @@ public class Mnemosyne2CardsImporter implements Converter {
 
                     // and also find out the corresponding tag for card's category
                     Category category = categoryOidMAP.get(tagOid);
+                    if (tagOid.contains(",")) {
+                        // If the card has multiple category, select only the first category.
+                        String firstOid = tagOid.split(",")[0];
+                        category = categoryOidMAP.get(firstOid);
+                    } else {
+                        category = categoryOidMAP.get(tagOid);
+                    }
+                    if (category == null) {
+                        category = new Category();
+                    }
 
                     card.setLearningData(ld);
                     card.setCategory(category);
