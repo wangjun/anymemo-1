@@ -22,8 +22,7 @@ public class CardsetsActivity extends QuizletAccountActivity {
 	
 	@Override
     protected void onAuthenticated(final String[] authTokens) {
-		Ln.i("The oauth taken is " + authTokens[0]);
-		Ln.i("My user name is: " + authTokens[1]);
+
 		oauthToken = authTokens[0];
 		userId = authTokens[1];
 		
