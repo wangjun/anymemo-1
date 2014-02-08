@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 package org.liberty.android.fantastischmemo.converter;
 
-import java.io.File;
 import java.io.FileReader;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -55,7 +54,6 @@ public class CSVImporter implements Converter {
     }
 
     public void convert(String src, String dest) throws Exception {
-        new File(dest).delete();
         AnyMemoDBOpenHelper helper = AnyMemoDBOpenHelperManager.getHelper(dest);
         CSVReader reader;
         if (separator == null) {
@@ -68,13 +66,11 @@ public class CSVImporter implements Converter {
 
 
             String[] nextLine;
-            int count = 0;
             final List<Card> cardList = new LinkedList<Card>();
             while((nextLine = reader.readNext()) != null) {
                 if(nextLine.length < 2){
                     throw new Exception("Malformed CSV file. Please make sure the CSV's first column is question, second one is answer and the optinal third one is category");
                 }
-                count++;
                 String note = "";
                 String category = "";
                 if(nextLine.length >= 3){
@@ -88,7 +84,6 @@ public class CSVImporter implements Converter {
                 LearningData ld = new LearningData();
                 cat.setName(category);
 
-                card.setOrdinal(count);
                 card.setCategory(cat);
                 card.setLearningData(ld);
                 card.setQuestion(nextLine[0]);

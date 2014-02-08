@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 package org.liberty.android.fantastischmemo.converter;
 
-import java.io.File;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -58,8 +57,6 @@ public class Supermemo2008XMLImporter extends org.xml.sax.helpers.DefaultHandler
 
     @Override
     public void convert(String src, String dest) throws Exception{
-        new File(dest).delete();
-
         URL mXMLUrl = new URL("file:///" + src);
         cardList = new LinkedList<Card>();
         characterBuf = new StringBuffer();

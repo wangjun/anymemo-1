@@ -67,6 +67,11 @@ public class AMEnv {
     public final static String QUIZLET_CLIENT_SECRET;
     public final static String QUIZLET_REDIRECT_URI = "anymemo-quizlet://oauth";
 
+    // Cram (Formally FlashcardExchange)
+    public final static String CRAM_API_ENDPOINT = "https://api.cram.com/v2";
+    public final static String CRAM_CLIENT_ID;
+    public final static String CRAM_CLIENT_SECRET;
+
 
     // Load values from AMSecrets.
     static {
@@ -87,17 +92,28 @@ public class AMEnv {
 
         DROPBOX_CONSUMER_KEY = secretValuesMap.get("DROPBOX_CONSUMER_KEY");
         DROPBOX_CONSUMER_SECRET = secretValuesMap.get("DROPBOX_CONSUMER_SECRET");
+
         GOOGLE_CLIENT_ID = secretValuesMap.get("GOOGLE_CLIENT_ID");
         GOOGLE_CLIENT_SECRET = secretValuesMap.get("GOOGLE_CLIENT_SECRET");
         QUIZLET_CLIENT_ID = secretValuesMap.get("QUIZLET_CLIENT_ID");
         QUIZLET_CLIENT_SECRET = secretValuesMap.get("QUIZLET_CLIENT_SECRET");
         
 
+        CRAM_CLIENT_ID = secretValuesMap.get("CRAM_CLIENT_ID");
+        CRAM_CLIENT_SECRET = secretValuesMap.get("CRAM_CLIENT_SECRET");
+
+
         assert DROPBOX_CONSUMER_KEY != null;
         assert DROPBOX_CONSUMER_SECRET != null;
+
         assert GOOGLE_CLIENT_ID != null;
         assert GOOGLE_CLIENT_SECRET != null;
+
         assert QUIZLET_CLIENT_ID != null;
         assert QUIZLET_CLIENT_SECRET != null;
+
+        assert CRAM_CLIENT_ID != null;
+        assert CRAM_CLIENT_SECRET != null;
+
     }
 }

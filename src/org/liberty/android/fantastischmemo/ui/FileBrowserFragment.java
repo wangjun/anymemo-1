@@ -138,18 +138,21 @@ public class FileBrowserFragment extends RoboDialogFragment implements OnItemCli
         }
         if(defaultRoot == null){
             defaultRoot = settings.getString(AMPrefKeys.SAVED_FILEBROWSER_PATH_KEY, null);
+
+            // Make sure the path exists.
+            if (StringUtils.isNotEmpty(defaultRoot) && !new File(defaultRoot).exists()) {
+                defaultRoot = null;
+            }
         }
 
-        if(StringUtils.isEmpty(defaultRoot)){
+        if (StringUtils.isEmpty(defaultRoot)) {
             File sdPath = new File(AMEnv.DEFAULT_ROOT_PATH);
             sdPath.mkdir();
 
             currentDirectory = sdPath;
-        }
-        else{
+        } else {
             currentDirectory = new File(defaultRoot + "/");
         }
-        System.err.println("defaultRoot: " + defaultRoot);
 
         // Should use this to enable menu
         setHasOptionsMenu(true);
@@ -318,9 +321,8 @@ public class FileBrowserFragment extends RoboDialogFragment implements OnItemCli
                                                     amFileUtil.deleteDbSafe(clickedFile.getAbsolutePath());
                                                     File dir = new File(clickedFile.getParent());
                                                     Log.v(TAG, "DIR: " + dir.toString());
-                                                    browseTo(dir);
                                                     /* Refresh the list */
-                                                    mActivity.restartActivity();
+                                                    browseTo(dir);
                                                 }
                                             })
                                             .setNegativeButton(getString(R.string.cancel_text), null)
@@ -376,7 +378,6 @@ public class FileBrowserFragment extends RoboDialogFragment implements OnItemCli
                                                 }
 
                                                 browseTo(currentDirectory);
-
                                             }
                                         })
                                         .setNegativeButton(getString(R.string.cancel_text), null)
