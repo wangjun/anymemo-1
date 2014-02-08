@@ -10,7 +10,6 @@ import android.support.v4.app.FragmentTransaction;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import roboguice.util.Ln;
 
 public class CardsetsActivity extends QuizletAccountActivity {
 	

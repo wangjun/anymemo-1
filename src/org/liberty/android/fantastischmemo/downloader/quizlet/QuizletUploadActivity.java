@@ -1,27 +1,13 @@
 package org.liberty.android.fantastischmemo.downloader.quizlet;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.util.List;
 
-import javax.net.ssl.HttpsURLConnection;
+import javax.inject.Inject;
 
-import org.apache.commons.io.IOUtils;
-import org.liberty.android.fantastischmemo.AnyMemoDBOpenHelper;
-import org.liberty.android.fantastischmemo.AnyMemoDBOpenHelperManager;
 import org.liberty.android.fantastischmemo.R;
-import org.liberty.android.fantastischmemo.dao.CardDao;
-
-import org.liberty.android.fantastischmemo.domain.Card;
-import org.liberty.android.fantastischmemo.downloader.quizlet.QuizletAccountActivity;
 import org.liberty.android.fantastischmemo.ui.FileBrowserFragment;
 import org.liberty.android.fantastischmemo.utils.AMGUIUtility;
 
-
-import roboguice.util.Ln;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -34,6 +20,13 @@ public class QuizletUploadActivity extends QuizletAccountActivity {
 	
     private String authToken = null;
     
+    private QuizletUploadHelper quizletUploadHelper;
+    
+	@Inject
+	public void setQuizletUploadHelper(QuizletUploadHelper quizletUploadHelper) {
+		this.quizletUploadHelper = quizletUploadHelper;
+	}
+	
     @Override
     public void onCreate(Bundle bundle) {
         super.onCreate(bundle);
@@ -42,68 +35,12 @@ public class QuizletUploadActivity extends QuizletAccountActivity {
     
     @Override
     protected void onAuthenticated(final String[] authTokens) {
-
         this.authToken = authTokens[0];
-
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         FileBrowserFragment fragment = new FileBrowserFragment();
         fragment.setOnFileClickListener(fileClickListener);
         ft.add(R.id.file_list, fragment);
         ft.commit();
-    }
-    
-    private void uploadToQuizlet(File file) {
-    	
-        // First read card because if it failed we don't even bother uploading.    	
-        AnyMemoDBOpenHelper helper = AnyMemoDBOpenHelperManager.getHelper(file.getAbsolutePath());
-        List<Card> cardList = null;
-        try {
-            final CardDao cardDao = helper.getCardDao();
-            cardList = cardDao.queryForAll();
-        } finally {
-            AnyMemoDBOpenHelperManager.releaseHelper(helper);
-        }
-
-        // Following doing upload
-        try {
-            URL url1 = new URL("https://api.quizlet.com/2.0/sets");      
-     		HttpsURLConnection conn = (HttpsURLConnection) url1.openConnection();
-     		conn.setDoInput(true);
-       		conn.setDoOutput(true);
-    		conn.setRequestMethod("POST");
-    		conn.addRequestProperty("Authorization", "Bearer " + authToken);
-    		conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded"); 
-    		 
-    		OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream());
-    		StringBuilder data = new StringBuilder();
-    		data.append(String.format("whitespace=%s",URLEncoder.encode("1", "UTF-8")));
-    		data.append(String.format("&title=%s",URLEncoder.encode(file.getName(), "UTF-8")));
-    		
-    		//Get cards from cardList
-            for (int i = 0; i < cardList.size(); i++) {
-                Card c = cardList.get(i);
-                data.append(String.format("&terms[]=%s",URLEncoder.encode(c.getQuestion(), "UTF-8")));
-                data.append(String.format("&definitions[]=%s",URLEncoder.encode(c.getAnswer(), "UTF-8")));
-            }
-            
-    		data.append(String.format("&lang_terms=%s",URLEncoder.encode("en", "UTF-8")));
-    		data.append(String.format("&lang_definitions=%s",URLEncoder.encode("en", "UTF-8")));
-    		data.append(String.format("&allow_discussion=%s",URLEncoder.encode("true", "UTF-8")));
-    		            
-    		writer.write(data.toString());
-            writer.close();    		
-
-            if (conn.getResponseCode() / 100 >= 3) {
-            	throw new IOException("Response code " +  conn.getResponseCode());    
-            }
-            else {
-                Ln.i("The response is " + conn.getResponseCode());   
-                String s = new String(IOUtils.toByteArray(conn.getInputStream()));
-                Ln.i("Response is "+ s);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
     
     private FileBrowserFragment.OnFileClickListener fileClickListener =
@@ -149,14 +86,13 @@ public class QuizletUploadActivity extends QuizletAccountActivity {
                 public Exception doInBackground(File... files) {
                     File file = files[0];
                     try {
-                        uploadToQuizlet(file);                        
+                    	quizletUploadHelper.uploadToQuizlet(file, authToken);
                     } catch (Exception e) {
                         Log.e(TAG, "Error uploading ", e);
                         return e;
                     }
                     return null;
                 }
-
 
                 @Override
                 public void onPostExecute(Exception e){

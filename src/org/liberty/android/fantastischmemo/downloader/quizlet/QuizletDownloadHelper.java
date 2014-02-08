@@ -80,7 +80,7 @@ class QuizletDownloadHelper {
 	}
 	
 	/**
-	 * Download cardsets list fron Quizlet and save to a db file
+	 * Download cardsets list from Quizlet and save to a db file
 	 * @param setId cardset ID
 	 * @param authToken oauth token
 	 * @return The path of saved db file
@@ -160,7 +160,6 @@ class QuizletDownloadHelper {
 	 * @throws IOException If http response code is not 2xx
 	 */
 	private String makeApiCall (URL url, String authToken) throws IOException {
-		
 		HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
 		conn.addRequestProperty("Authorization", "Bearer " + authToken);
 
