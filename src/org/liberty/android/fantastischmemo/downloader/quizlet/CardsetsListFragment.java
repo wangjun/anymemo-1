@@ -55,4 +55,14 @@ public class CardsetsListFragment extends AbstractDownloaderFragment {
 	protected void goBack() {
 		// Do nothing
 	}
+
+	@Override
+	protected List<DownloadItem> loadMore() throws Exception {
+		return null;
+	}
+
+	@Override
+	protected boolean hasMore() {
+		return false;
+	}
 }
