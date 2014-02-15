@@ -160,14 +160,19 @@ class QuizletDownloadHelper {
 	 * @throws IOException If http response code is not 2xx
 	 */
 	private String makeApiCall (URL url, String authToken) throws IOException {
-		HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-		conn.addRequestProperty("Authorization", "Bearer " + authToken);
+		HttpsURLConnection conn = null;
+		try{
+			conn = (HttpsURLConnection) url.openConnection();
+			conn.addRequestProperty("Authorization", "Bearer " + authToken);
 
-		String response = new String(IOUtils.toByteArray(conn.getInputStream()));
-        if (conn.getResponseCode() / 100 >= 3) {
-        	throw new IOException("Response code: " +  conn.getResponseCode() + " Response is: " + response);    
+			String response = new String(IOUtils.toByteArray(conn
+					.getInputStream()));
+			if (conn.getResponseCode() / 100 >= 3) {
+				throw new IOException("Response code: "
+						+ conn.getResponseCode() + " Response is: " + response);
+			}
+			return response;
+		} finally {
         }
-        
-        return response;
 	}
 }
