@@ -49,24 +49,29 @@ public abstract class QuizletAccountActivity extends OauthAccountActivity {
     @Override
     protected String[] getAccessTokens(final String[] requests) throws IOException {
         String code = requests[0];
-        String authed = AMEnv.QUIZLET_CLIENT_ID + ":" + AMEnv.QUIZLET_CLIENT_SECRET;
-        String authPara = Base64.encodeToString(authed.getBytes(), 0);
+        String clientIdAndSecret = AMEnv.QUIZLET_CLIENT_ID + ":" + AMEnv.QUIZLET_CLIENT_SECRET;
+        String encodedClientIdAndSecret = Base64.encodeToString(clientIdAndSecret.getBytes(), 0);
         URL url1 = new URL("https://api.quizlet.com/oauth/token");
         HttpsURLConnection conn = (HttpsURLConnection) url1.openConnection();
         conn.addRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
         //Add the Basic Authorization item
-        conn.addRequestProperty("Authorization", "Basic " + authPara);
-        Ln.v("To check result of base64 encode" + authPara);
+        conn.addRequestProperty("Authorization", "Basic " + encodedClientIdAndSecret);
         conn.setRequestMethod("POST");
         conn.setDoInput(true);
         conn.setDoOutput(true);
-        String payload = String.format("grant_type=%s&code=%s",
+        String payload = String.format("grant_type=%s&code=%s&redirect_uri=%s",
                 URLEncoder.encode("authorization_code", "UTF-8"),
-                URLEncoder.encode(code, "UTF-8"));
+                URLEncoder.encode(code, "UTF-8"),
+                URLEncoder.encode(AMEnv.QUIZLET_REDIRECT_URI, "UTF-8"));
         OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream());
         out.write(payload);
         out.close();
 
+		if (conn.getResponseCode() / 100 >= 3) {
+ 			Ln.v("Error response for: " + url1 + " is "+ new String (IOUtils.toByteArray(conn.getErrorStream())));
+ 			throw new IOException("Response code: " +  conn.getResponseCode());
+ 		}
+			
         String s = new String(IOUtils.toByteArray(conn.getInputStream()));
         try {
             JSONObject jsonObject = new JSONObject(s);

@@ -8,9 +8,11 @@ import org.liberty.android.fantastischmemo.R;
 import org.liberty.android.fantastischmemo.ui.FileBrowserFragment;
 import org.liberty.android.fantastischmemo.utils.AMGUIUtility;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
@@ -99,6 +101,7 @@ public class QuizletUploadActivity extends QuizletAccountActivity {
                     if (e != null) {
                         AMGUIUtility.displayException(QuizletUploadActivity.this, getString(R.string.error_text), getString(R.string.error_text), e);
                     } else {
+                        setResult(Activity.RESULT_OK, new Intent());
                         new AlertDialog.Builder(QuizletUploadActivity.this)
                             .setTitle(R.string.successfully_uploaded_text)
                             .setMessage(R.string.quizlet_successfully_uploaded_message)
