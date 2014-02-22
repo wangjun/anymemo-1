@@ -3,7 +3,6 @@ package org.liberty.android.fantastischmemo.downloader.quizlet;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.List;
@@ -77,7 +76,7 @@ class QuizletUploadHelper {
 		OutputStreamWriter writer = null;
  		try {
  			conn = (HttpsURLConnection) url.openConnection();
- 			conn.setDoInput(true);
+ 			conn.setDoInput(false);
  			conn.setDoOutput(true);
  			conn.setRequestMethod("POST");
  			conn.addRequestProperty("Authorization", "Bearer " + authToken);
@@ -85,17 +84,15 @@ class QuizletUploadHelper {
         
  			writer = new OutputStreamWriter(conn.getOutputStream());
  			writer.write(content);	
+ 			writer.close();
  			
  			if (conn.getResponseCode() / 100 >= 3) {
  				Ln.v("Post content is: " + content);
+ 				Ln.v("Error string is: " + new String (IOUtils.toByteArray(conn.getErrorStream())));
  				throw new IOException("Response code: " +  conn.getResponseCode() + " URL is: " + url);
  			}
- 			String s = new String(IOUtils.toByteArray(conn.getInputStream()));
-            Ln.i("Response is "+ s);
  		} finally {
- 			if (writer != null) {
- 				//writer.close();
- 		    }
+ 			conn.disconnect();
  		}
 	}
 }

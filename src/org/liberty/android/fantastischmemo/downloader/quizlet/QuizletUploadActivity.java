@@ -17,22 +17,22 @@ import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 
 public class QuizletUploadActivity extends QuizletAccountActivity {
-	
+
     private String authToken = null;
-    
+
     private QuizletUploadHelper quizletUploadHelper;
-    
+
 	@Inject
 	public void setQuizletUploadHelper(QuizletUploadHelper quizletUploadHelper) {
 		this.quizletUploadHelper = quizletUploadHelper;
 	}
-	
+
     @Override
     public void onCreate(Bundle bundle) {
         super.onCreate(bundle);
         setContentView(R.layout.upload_quizlet_screen);
     }
-    
+
     @Override
     protected void onAuthenticated(final String[] authTokens) {
         this.authToken = authTokens[0];
@@ -42,7 +42,7 @@ public class QuizletUploadActivity extends QuizletAccountActivity {
         ft.add(R.id.file_list, fragment);
         ft.commit();
     }
-    
+
     private FileBrowserFragment.OnFileClickListener fileClickListener =
             new FileBrowserFragment.OnFileClickListener() {
 
@@ -51,7 +51,7 @@ public class QuizletUploadActivity extends QuizletAccountActivity {
                     showUploadDialog(file);
                 }
             };
-         
+
             private void showUploadDialog(final File file) {
                 new AlertDialog.Builder(this)
                     .setTitle(R.string.upload_text)

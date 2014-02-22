@@ -12,19 +12,19 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 
 public class CardsetsActivity extends QuizletAccountActivity {
-	
+
 	private String oauthToken;
-	
+
 	private String userId;
-	
+
     private final static int UPLOAD_ACTIVITY = 1;	
-	
+
 	@Override
     protected void onAuthenticated(final String[] authTokens) {
 
 		oauthToken = authTokens[0];
 		userId = authTokens[1];
-		
+
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         Fragment newFragment = new CardsetsListFragment();
         Bundle args = new Bundle();
@@ -34,13 +34,13 @@ public class CardsetsActivity extends QuizletAccountActivity {
         ft.add(R.id.cardsets_list, newFragment);
         ft.commit();		
     }
-	
+
     @Override
     public void onCreate(Bundle bundle) {
         super.onCreate(bundle);
         setContentView(R.layout.cardsets_list_screen);
     }
-    
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu){
         MenuInflater inflater = getMenuInflater();
@@ -67,7 +67,7 @@ public class CardsetsActivity extends QuizletAccountActivity {
         }
         return false;
     }
-    
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
         super.onActivityResult(requestCode, resultCode, data);
