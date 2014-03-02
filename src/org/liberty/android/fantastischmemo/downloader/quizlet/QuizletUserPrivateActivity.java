@@ -11,7 +11,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 
-public class CardsetsActivity extends QuizletAccountActivity {
+public class QuizletUserPrivateActivity extends QuizletAccountActivity {
 
 	private String oauthToken;
 
@@ -30,6 +30,8 @@ public class CardsetsActivity extends QuizletAccountActivity {
         Bundle args = new Bundle();
         args.putString(CardsetsListFragment.EXTRA_AUTH_TOKEN, oauthToken);
         args.putString(CardsetsListFragment.EXTRA_USER_ID, userId);
+		args.putString(CardsetsListFragment.EXTRA_SEARCH_TERM, null);
+		args.putString(CardsetsListFragment.EXTRA_SEARCH_METHOD, CardsetsListFragment.SearchMethod.ByUserPrivate.toString());
         newFragment.setArguments(args);
         ft.add(R.id.cardsets_list, newFragment);
         ft.commit();		

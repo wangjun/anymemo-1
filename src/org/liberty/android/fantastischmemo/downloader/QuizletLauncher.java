@@ -19,47 +19,37 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 package org.liberty.android.fantastischmemo.downloader;
 
-import org.liberty.android.fantastischmemo.*;
-import org.liberty.android.fantastischmemo.downloader.quizlet.CardsetsActivity;
+import org.liberty.android.fantastischmemo.AMActivity;
+import org.liberty.android.fantastischmemo.R;
+import org.liberty.android.fantastischmemo.downloader.quizlet.QuizletUserPrivateActivity;
+import org.liberty.android.fantastischmemo.downloader.quizlet.QuizletSearchByTitleActivity;
+import org.liberty.android.fantastischmemo.downloader.quizlet.QuizletSearchByUsernameActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.view.View.OnClickListener;
-import android.preference.PreferenceManager;
-import android.content.Intent;
-import android.content.DialogInterface;
-import android.content.SharedPreferences;
-import android.app.AlertDialog;
+import android.widget.Button;
 
 public class QuizletLauncher extends AMActivity implements OnClickListener{
     private Button searchTagButton;
+    
     private Button searchUserButton;
-    private SharedPreferences settings;
-    private SharedPreferences.Editor editor;
-    private Button startQuizButton;
+    
+    private Button userPrivateButton;
 
     @Override
 	public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.quizlet_launcher);
+        
         searchTagButton = (Button)findViewById(R.id.quizlet_search_tag);
         searchUserButton = (Button)findViewById(R.id.quizlet_search_user);
-        startQuizButton = (Button)findViewById(R.id.quizlet_private_cards);
+        userPrivateButton = (Button)findViewById(R.id.quizlet_private_cards);
         searchTagButton.setOnClickListener(this);
         searchUserButton.setOnClickListener(this);
-        startQuizButton.setOnClickListener(setActivity);
-        settings = PreferenceManager.getDefaultSharedPreferences(this);
-        editor = settings.edit();
+        userPrivateButton.setOnClickListener(this);
     }
-
-    private View.OnClickListener setActivity = new View.OnClickListener() {
-    	public void onClick(View v){
-    	Intent intent = new Intent(QuizletLauncher.this, CardsetsActivity.class);
-    	startActivity(intent);
-    	}
-    };
     
     @Override
     public void onResume(){
@@ -69,58 +59,18 @@ public class QuizletLauncher extends AMActivity implements OnClickListener{
     @Override
     public void onClick(View v){
         if(v == searchTagButton){
-            showSearchTagDialog();
+            Intent intent = new Intent(this, QuizletSearchByTitleActivity.class);
+            startActivity(intent);
         }
         if(v == searchUserButton){
-            showSearchUserDialog();
+            Intent intent = new Intent(this, QuizletSearchByUsernameActivity.class);
+            startActivity(intent);
+        }
+        if(v == userPrivateButton){
+            Intent intent = new Intent(this, QuizletUserPrivateActivity.class);
+            startActivity(intent);
         }
 
-    }
-
-    private void showSearchTagDialog(){
-        final EditText et = new EditText(this);
-        et.setText(settings.getString(AMPrefKeys.QUIZLET_SAVED_SEARCH, ""));
-        new AlertDialog.Builder(this)
-            .setTitle(R.string.search_tag)
-            .setMessage(R.string.quizlet_search_tag_message)
-            .setView(et)
-            .setPositiveButton(R.string.search_text, new DialogInterface.OnClickListener(){
-                public void onClick(DialogInterface dialog, int which){
-                    String searchText = et.getText().toString();
-                    editor.putString(AMPrefKeys.QUIZLET_SAVED_SEARCH, searchText);
-                    editor.commit();
-                    Intent myIntent = new Intent(QuizletLauncher.this, DownloaderQuizlet.class);
-                    myIntent.setAction(DownloaderQuizlet.INTENT_ACTION_SEARCH_TAG);
-                    myIntent.putExtra("search_criterion", searchText);
-                    startActivity(myIntent);
-                }
-            })
-            .setNegativeButton(R.string.cancel_text, null)
-            .create()
-            .show();
-    }
-
-    private void showSearchUserDialog(){
-        final EditText et = new EditText(this);
-        et.setText(settings.getString(AMPrefKeys.QUIZLET_SAVED_USER, ""));
-        new AlertDialog.Builder(this)
-            .setTitle(R.string.search_user)
-            .setMessage(R.string.quizlet_search_user_message)
-            .setView(et)
-            .setPositiveButton(R.string.search_text, new DialogInterface.OnClickListener(){
-                public void onClick(DialogInterface dialog, int which){
-                    String searchText = et.getText().toString();
-                    editor.putString(AMPrefKeys.QUIZLET_SAVED_USER, searchText);
-                    editor.commit();
-                    Intent myIntent = new Intent(QuizletLauncher.this, DownloaderQuizlet.class);
-                    myIntent.setAction(DownloaderQuizlet.INTENT_ACTION_SEARCH_USER);
-                    myIntent.putExtra("search_criterion", searchText);
-                    startActivity(myIntent);
-                }
-            })
-            .setNegativeButton(R.string.cancel_text, null)
-            .create()
-            .show();
     }
 }
 

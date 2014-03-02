@@ -3,6 +3,7 @@ package org.liberty.android.fantastischmemo.downloader.quizlet;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import javax.inject.Inject;
@@ -22,6 +23,7 @@ import org.liberty.android.fantastischmemo.domain.Category;
 import org.liberty.android.fantastischmemo.domain.LearningData;
 import org.liberty.android.fantastischmemo.downloader.DownloadItem;
 import org.liberty.android.fantastischmemo.downloader.DownloaderUtils;
+import org.liberty.android.fantastischmemo.downloader.cram.CramCardSetListFragment.SearchMethod;
 import org.liberty.android.fantastischmemo.utils.AMFileUtil;
 
 import roboguice.util.Ln;
@@ -34,7 +36,11 @@ class QuizletDownloadHelper {
 	private DownloaderUtils downloaderUtils;
 
 	private AMFileUtil amFileUtil;
-	
+
+	private static final String QUIZLET_API_KEY = "fgFdZShXfG";
+
+	private static final String QUIZLET_API = "https://api.quizlet.com/2.0/search/sets?client_id=" + QUIZLET_API_KEY + "&";
+
 	@Inject
 	public void setDownloaderUtils(DownloaderUtils downloaderUtils) {
 		this.downloaderUtils = downloaderUtils;
@@ -44,20 +50,27 @@ class QuizletDownloadHelper {
 	public void setAmFileUtil(AMFileUtil amFileUtil) {
 		this.amFileUtil = amFileUtil;
 	}
-	
+
 	/**
 	 * Fetch cardsets list from Quizlet
-	 * @param userId user name
-	 * @param authToken oauth token
+	 * 
+	 * @param userId
+	 *            user name
+	 * @param authToken
+	 *            oauth token
 	 * @return cardsets list
-	 * @throws IOException IOException If http response code is not 2xx
-	 * @throws JSONException If the response is invalid JSON
+	 * @throws IOException
+	 *             IOException If http response code is not 2xx
+	 * @throws JSONException
+	 *             If the response is invalid JSON
 	 */
-	public List<DownloadItem> fetchCardsetsList(String userId, String authToken) throws IOException, JSONException {
+	public List<DownloadItem> getUserPrivateCardsetsList(String userId, String authToken)
+			throws IOException, JSONException {
 		List<DownloadItem> downloadItemList = new ArrayList<DownloadItem>();
-		URL url = new URL("https://api.quizlet.com/2.0/users/" + userId + "/sets");
+		URL url = new URL("https://api.quizlet.com/2.0/users/" + userId
+				+ "/sets");
 		String response = makeApiCall(url, authToken);
-		
+
 		JSONArray jsonArray = new JSONArray(response);
 		for (int i = 0; i < jsonArray.length(); i++) {
 			JSONObject jsonItem = jsonArray.getJSONObject(i);
@@ -78,16 +91,22 @@ class QuizletDownloadHelper {
 
 		return downloadItemList;
 	}
-	
+
 	/**
 	 * Download cardsets list from Quizlet and save to a db file
-	 * @param setId cardset ID
-	 * @param authToken oauth token
+	 * 
+	 * @param setId
+	 *            cardset ID
+	 * @param authToken
+	 *            oauth token
 	 * @return The path of saved db file
-	 * @throws IOException IOException If http response code is not 2xx
-	 * @throws JSONException If the response is invalid JSON
+	 * @throws IOException
+	 *             IOException If http response code is not 2xx
+	 * @throws JSONException
+	 *             If the response is invalid JSON
 	 */
-	public String downloadCardset(String setId, String authToken) throws IOException, JSONException {
+	public String downloadCardset(String setId, String authToken)
+			throws IOException, JSONException {
 		URL url = new URL("https://api.quizlet.com/2.0/sets/" + setId);
 		String response = makeApiCall(url, authToken);
 
@@ -98,7 +117,8 @@ class QuizletDownloadHelper {
 		List<Card> cardList = new ArrayList<Card>(termCount);
 
 		// handle image
-		String dbname = downloaderUtils.validateDBName(rootObject.getString("title")) + ".db";
+		String dbname = downloaderUtils.validateDBName(rootObject
+				.getString("title")) + ".db";
 		String imagePath = AMEnv.DEFAULT_IMAGE_PATH + dbname + "/";
 		if (hasImage) {
 			FileUtils.forceMkdir(new File(imagePath));
@@ -151,19 +171,25 @@ class QuizletDownloadHelper {
 
 		return fullpath;
 	}
-	
+
 	/**
 	 * Make API call to Quizlet server with oauth
-	 * @param url API call endpoint
-	 * @param authToken oauth auth token
+	 * 
+	 * @param url
+	 *            API call endpoint
+	 * @param authToken
+	 *            oauth auth token
 	 * @return Response of API call
-	 * @throws IOException If http response code is not 2xx
+	 * @throws IOException
+	 *             If http response code is not 2xx
 	 */
-	private String makeApiCall (URL url, String authToken) throws IOException {
+	private String makeApiCall(URL url, String authToken) throws IOException {
 		HttpsURLConnection conn = null;
-		try{
+		try {
 			conn = (HttpsURLConnection) url.openConnection();
-			conn.addRequestProperty("Authorization", "Bearer " + authToken);
+			if (authToken != null) {
+				conn.addRequestProperty("Authorization", "Bearer " + authToken);
+			}
 
 			String response = new String(IOUtils.toByteArray(conn
 					.getInputStream()));
@@ -173,6 +199,91 @@ class QuizletDownloadHelper {
 			}
 			return response;
 		} finally {
-        }
+			conn.disconnect();
+		}
 	}
+
+	//Following functions for public card sets
+	
+	/**
+	 * Search for public card sets from Quizlet by title
+	 * @param title card title
+	 * @param page current page
+	 * @return Search result of card sets list
+	 * @throws IOException IOException If http response code is not 2xx
+	 */
+	public List<DownloadItem> getCardListByTitle(String title, int page) throws IOException {
+        String urlString = String.format(QUIZLET_API + "q=%1$s&page=%2$d",
+                URLEncoder.encode(title, "UTF-8"),
+                page);
+
+            URL url = new URL(urlString);
+
+            String responseString = makeApiCall(url, null);
+            
+            try {
+                JSONObject jsonObject = new JSONObject(responseString);
+                JSONArray setsArray = jsonObject.getJSONArray("sets");
+                return parseSetsJSONArray(setsArray);
+            } catch(JSONException e) {
+                throw new IOException(e);
+            }
+	}
+	
+	/**
+	 * Search for public card sets from Quizlet by user name
+	 * @param username card creator user name
+	 * @param page current page
+	 * @return Search result of card sets list
+	 * @throws IOException IOException If http response code is not 2xx
+	 */	
+	public List<DownloadItem> getCardListByUser(String username, int page) throws IOException {
+        String urlString = String.format(QUIZLET_API + "creator=%1$s&page=%2$d",
+                URLEncoder.encode(username, "UTF-8"),
+                page);
+
+            URL url = new URL(urlString);
+
+            String responseString = makeApiCall(url, null);
+            
+            try {
+                JSONObject jsonObject = new JSONObject(responseString);
+                JSONArray setsArray = jsonObject.getJSONArray("sets");
+                return parseSetsJSONArray(setsArray);
+            } catch(JSONException e) {
+                throw new IOException(e);
+            }
+	}
+
+    /**
+     * Helper method to parse the response of set list class
+     * @param setsArray A JSON array of sets
+     * @return a list of download items
+     */
+    private List<DownloadItem> parseSetsJSONArray(JSONArray setsArray) throws IOException {
+        try {
+            List<DownloadItem> itemList = new ArrayList<DownloadItem>(
+                    setsArray.length());
+            for (int i = 0; i < setsArray.length(); i++) {
+    			JSONObject jsonItem = setsArray.getJSONObject(i);
+
+    			String address = jsonItem.getString("url");
+    			String description = new StringBuilder().append("<br />")
+    					.append(jsonItem.getInt("term_count")).append("<br />")
+    					.append(jsonItem.getLong("created_date")).append("<br />")
+    					.append(jsonItem.getString("description")).append("<br />")
+    					.append(jsonItem.getString("created_by")).toString();
+
+    			DownloadItem item = new DownloadItem(
+    					DownloadItem.ItemType.Database,
+    					jsonItem.getString("title"), description, address);
+    			item.setExtras("id", "" + jsonItem.getInt("id"));
+    			itemList.add(item);
+            }
+            return itemList;
+        } catch (JSONException e) {
+            throw new IOException(e);
+        }
+    }
+    
 }
