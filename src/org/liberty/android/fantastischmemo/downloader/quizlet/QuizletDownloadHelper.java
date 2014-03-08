@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.net.ssl.HttpsURLConnection;
@@ -15,6 +16,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.liberty.android.fantastischmemo.AMEnv;
+import org.liberty.android.fantastischmemo.AMSecrets;
 import org.liberty.android.fantastischmemo.AnyMemoDBOpenHelper;
 import org.liberty.android.fantastischmemo.AnyMemoDBOpenHelperManager;
 import org.liberty.android.fantastischmemo.dao.CardDao;
@@ -23,23 +25,16 @@ import org.liberty.android.fantastischmemo.domain.Category;
 import org.liberty.android.fantastischmemo.domain.LearningData;
 import org.liberty.android.fantastischmemo.downloader.DownloadItem;
 import org.liberty.android.fantastischmemo.downloader.DownloaderUtils;
-import org.liberty.android.fantastischmemo.downloader.cram.CramCardSetListFragment.SearchMethod;
 import org.liberty.android.fantastischmemo.utils.AMFileUtil;
 
 import roboguice.util.Ln;
 import android.net.Uri;
-
-import java.util.List;
 
 class QuizletDownloadHelper {
 
 	private DownloaderUtils downloaderUtils;
 
 	private AMFileUtil amFileUtil;
-
-	private static final String QUIZLET_API_KEY = "fgFdZShXfG";
-
-	private static final String QUIZLET_API = "https://api.quizlet.com/2.0/search/sets?client_id=" + QUIZLET_API_KEY + "&";
 
 	@Inject
 	public void setDownloaderUtils(DownloaderUtils downloaderUtils) {
@@ -105,9 +100,19 @@ class QuizletDownloadHelper {
 	 * @throws JSONException
 	 *             If the response is invalid JSON
 	 */
-	public String downloadCardset(String setId, String authToken)
-			throws IOException, JSONException {
-		URL url = new URL("https://api.quizlet.com/2.0/sets/" + setId);
+	public String downloadCardset(String setId, String authToken) throws IOException, JSONException {
+		URL url;
+		
+		// Public cardset download needs cilent id, private cardset download needs authtoken
+		if (authToken != null) {
+			url = new URL("https://api.quizlet.com/2.0/sets/" + setId);
+		} else {
+	        String urlString = String.format("https://api.quizlet.com/2.0/sets/%1$s?client_id=%2$s",
+	                URLEncoder.encode(setId, "UTF-8"),
+	                URLEncoder.encode(AMSecrets.QUIZLET_CLIENT_ID, "UTF-8"));
+	        url = new URL(urlString);
+		}
+		
 		String response = makeApiCall(url, authToken);
 
 		JSONObject rootObject = new JSONObject(response);
@@ -117,8 +122,7 @@ class QuizletDownloadHelper {
 		List<Card> cardList = new ArrayList<Card>(termCount);
 
 		// handle image
-		String dbname = downloaderUtils.validateDBName(rootObject
-				.getString("title")) + ".db";
+		String dbname = downloaderUtils.validateDBName(rootObject.getString("title")) + ".db";
 		String imagePath = AMEnv.DEFAULT_IMAGE_PATH + dbname + "/";
 		if (hasImage) {
 			FileUtils.forceMkdir(new File(imagePath));
@@ -213,7 +217,8 @@ class QuizletDownloadHelper {
 	 * @throws IOException IOException If http response code is not 2xx
 	 */
 	public List<DownloadItem> getCardListByTitle(String title, int page) throws IOException {
-        String urlString = String.format(QUIZLET_API + "q=%1$s&page=%2$d",
+        String urlString = String.format("https://api.quizlet.com/2.0/search/sets?client_id=%1$s&q=%2$s&page=%3$d",
+        		URLEncoder.encode(AMSecrets.QUIZLET_CLIENT_ID, "UTF-8"),
                 URLEncoder.encode(title, "UTF-8"),
                 page);
 
@@ -238,7 +243,8 @@ class QuizletDownloadHelper {
 	 * @throws IOException IOException If http response code is not 2xx
 	 */	
 	public List<DownloadItem> getCardListByUser(String username, int page) throws IOException {
-        String urlString = String.format(QUIZLET_API + "creator=%1$s&page=%2$d",
+        String urlString = String.format("https://api.quizlet.com/2.0/search/sets?client_id=%1$s&creator=%2$s&page=%3$d",
+        		URLEncoder.encode(AMSecrets.QUIZLET_CLIENT_ID, "UTF-8"),
                 URLEncoder.encode(username, "UTF-8"),
                 page);
 
