@@ -13,28 +13,29 @@ import android.view.MenuItem;
 
 public class QuizletUserPrivateActivity extends QuizletAccountActivity {
 
-	private String oauthToken;
+    private String oauthToken;
 
-	private String userId;
+    private String userId;
 
-    private final static int UPLOAD_ACTIVITY = 1;	
+    private final static int UPLOAD_ACTIVITY = 1;
 
-	@Override
+    @Override
     protected void onAuthenticated(final String[] authTokens) {
 
-		oauthToken = authTokens[0];
-		userId = authTokens[1];
+        oauthToken = authTokens[0];
+        userId = authTokens[1];
 
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         Fragment newFragment = new CardsetsListFragment();
         Bundle args = new Bundle();
         args.putString(CardsetsListFragment.EXTRA_AUTH_TOKEN, oauthToken);
         args.putString(CardsetsListFragment.EXTRA_USER_ID, userId);
-		args.putString(CardsetsListFragment.EXTRA_SEARCH_TERM, null);
-		args.putString(CardsetsListFragment.EXTRA_SEARCH_METHOD, CardsetsListFragment.SearchMethod.ByUserPrivate.toString());
+        args.putString(CardsetsListFragment.EXTRA_SEARCH_TERM, null);
+        args.putString(CardsetsListFragment.EXTRA_SEARCH_METHOD,
+                CardsetsListFragment.SearchMethod.ByUserPrivate.toString());
         newFragment.setArguments(args);
         ft.add(R.id.cardsets_list, newFragment);
-        ft.commit();		
+        ft.commit();
     }
 
     @Override
@@ -44,7 +45,7 @@ public class QuizletUserPrivateActivity extends QuizletAccountActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu){
+    public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.quizlet_cardsets_menu, menu);
         return true;
@@ -53,37 +54,35 @@ public class QuizletUserPrivateActivity extends QuizletAccountActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.upload:
-            {
-                startActivityForResult(new Intent(this, QuizletUploadActivity.class), UPLOAD_ACTIVITY);
-                return true;
-            }
-            case R.id.logout:
-            {
-                invalidateSavedToken();
-                // After mark saved token to null, we should exit.
-                finish();
-                return true;
-            }
+        case R.id.upload: {
+            startActivityForResult(
+                    new Intent(this, QuizletUploadActivity.class),
+                    UPLOAD_ACTIVITY);
+            return true;
+        }
+        case R.id.logout: {
+            invalidateSavedToken();
+            // After mark saved token to null, we should exit.
+            finish();
+            return true;
+        }
 
         }
         return false;
     }
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data){
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == Activity.RESULT_CANCELED) {
             return;
         }
 
         switch (requestCode) {
-            case UPLOAD_ACTIVITY:
-            {
-                restartActivity();
-                break;
-            }
+        case UPLOAD_ACTIVITY: {
+            restartActivity();
+            break;
+        }
         }
     }
 }
-
