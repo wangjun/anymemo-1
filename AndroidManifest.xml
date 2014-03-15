@@ -47,12 +47,7 @@
         <activity
             android:name=".downloader.cram.CramSearchPublicCardSetActivity" />
         <activity
-            android:name=".downloader.QuizletLauncher"
-            android:configChanges="orientation|keyboardHidden" >
-        </activity>
-        <activity
-            android:name=".downloader.DownloaderQuizlet"
-            android:configChanges="orientation|keyboardHidden" />
+            android:name=".downloader.quizlet.QuizletLauncher" />
         <activity
             android:name=".downloader.dropbox.DropboxDBListActivity"
             android:configChanges="orientation|keyboardHidden" />
@@ -72,7 +67,7 @@
         <activity
             android:name=".downloader.quizlet.QuizletSearchByTitleActivity" />
         <activity
-            android:name=".downloader.quizlet.QuizletSearchByUsernameActivity" />           
+            android:name=".downloader.quizlet.QuizletSearchByUsernameActivity" />
         <activity 
             android:name=".ui.CardEditor"
             android:configChanges="orientation|keyboardHidden" />
@@ -152,14 +147,14 @@
         <service
             android:name=".service.ConvertIntentService" />
         <provider
-                android:name=".provider.CardProvider"
-                android:authorities="org.liberty.android.fantastischmemo.cardprovider"
-                android:exported="true"
-                android:multiprocess="true" />
+            android:name=".provider.CardProvider"
+            android:authorities="org.liberty.android.fantastischmemo.cardprovider"
+            android:exported="true"
+            android:multiprocess="true" />
         <provider
-                android:name=".provider.DatabasesProvider"
-                android:authorities="org.liberty.android.fantastischmemo.databasesprovider"
-                android:exported="true"
-                android:multiprocess="true" />
+            android:name=".provider.DatabasesProvider"
+            android:authorities="org.liberty.android.fantastischmemo.databasesprovider"
+            android:exported="true"
+            android:multiprocess="true" />
     </application>
 </manifest> 

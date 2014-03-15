@@ -28,7 +28,7 @@ public abstract class QuizletAccountActivity extends OauthAccountActivity {
         String token = accessTokens[0];
         String userId = accessTokens[1];
         try {
-            URL url1 = new URL("https://api.quizlet.com/2.0/users/" + userId);
+            URL url1 = new URL(AMEnv.QUIZLET_API_ENDPOINT + "/users/" + userId);
             HttpsURLConnection conn = (HttpsURLConnection) url1
                     .openConnection();
             conn.addRequestProperty("Authorization",

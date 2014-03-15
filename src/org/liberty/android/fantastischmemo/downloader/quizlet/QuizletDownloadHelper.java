@@ -62,7 +62,7 @@ class QuizletDownloadHelper {
     public List<DownloadItem> getUserPrivateCardsetsList(String userId,
             String authToken) throws IOException, JSONException {
         List<DownloadItem> downloadItemList = new ArrayList<DownloadItem>();
-        URL url = new URL("https://api.quizlet.com/2.0/users/" + userId
+        URL url = new URL(AMEnv.QUIZLET_API_ENDPOINT + "/users/" + userId
                 + "/sets");
         String response = makeApiCall(url, authToken);
 
@@ -107,10 +107,10 @@ class QuizletDownloadHelper {
         // Public cardset download needs cilent id, private cardset download
         // needs authtoken
         if (authToken != null) {
-            url = new URL("https://api.quizlet.com/2.0/sets/" + setId);
+            url = new URL(AMEnv.QUIZLET_API_ENDPOINT + "/sets/" + setId);
         } else {
-            String urlString = String.format(
-                    "https://api.quizlet.com/2.0/sets/%1$s?client_id=%2$s",
+            String urlString = String.format(AMEnv.QUIZLET_API_ENDPOINT
+                    + "/sets/" + "%1$s?client_id=%2$s",
                     URLEncoder.encode(setId, "UTF-8"),
                     URLEncoder.encode(AMSecrets.QUIZLET_CLIENT_ID, "UTF-8"));
             url = new URL(urlString);
@@ -226,10 +226,10 @@ class QuizletDownloadHelper {
      */
     public List<DownloadItem> getCardListByTitle(String title, int page)
             throws IOException {
-        String urlString = String
-                .format("https://api.quizlet.com/2.0/search/sets?client_id=%1$s&q=%2$s&page=%3$d",
-                        URLEncoder.encode(AMSecrets.QUIZLET_CLIENT_ID, "UTF-8"),
-                        URLEncoder.encode(title, "UTF-8"), page);
+        String urlString = String.format(AMEnv.QUIZLET_API_ENDPOINT
+                + "/search/sets?client_id=%1$s&q=%2$s&page=%3$d",
+                URLEncoder.encode(AMSecrets.QUIZLET_CLIENT_ID, "UTF-8"),
+                URLEncoder.encode(title, "UTF-8"), page);
 
         URL url = new URL(urlString);
 
@@ -257,10 +257,10 @@ class QuizletDownloadHelper {
      */
     public List<DownloadItem> getCardListByUser(String username, int page)
             throws IOException {
-        String urlString = String
-                .format("https://api.quizlet.com/2.0/search/sets?client_id=%1$s&creator=%2$s&page=%3$d",
-                        URLEncoder.encode(AMSecrets.QUIZLET_CLIENT_ID, "UTF-8"),
-                        URLEncoder.encode(username, "UTF-8"), page);
+        String urlString = String.format(AMEnv.QUIZLET_API_ENDPOINT
+                + "/search/sets?client_id=%1$s&creator=%2$s&page=%3$d",
+                URLEncoder.encode(AMSecrets.QUIZLET_CLIENT_ID, "UTF-8"),
+                URLEncoder.encode(username, "UTF-8"), page);
 
         URL url = new URL(urlString);
 
