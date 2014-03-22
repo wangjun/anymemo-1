@@ -4,9 +4,10 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import org.apache.commons.lang3.StringUtils;
 import org.liberty.android.fantastischmemo.downloader.AbstractDownloaderFragment;
 import org.liberty.android.fantastischmemo.downloader.DownloadItem;
+
+import com.google.common.base.Strings;
 
 import android.os.Bundle;
 
@@ -58,7 +59,7 @@ public class CardsetsListFragment extends AbstractDownloaderFragment {
         this.searchMethod = SearchMethod.valueOf(args
                 .getString(EXTRA_SEARCH_METHOD));
 
-        assert StringUtils.isNotEmpty(searchTerm) : "Search term should not be empty";
+        assert !Strings.isNullOrEmpty(searchTerm) : "Search term should not be empty";
     }
 
     @Override
