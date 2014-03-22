@@ -19,7 +19,7 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.widget.ListView;
 
-import com.jayway.android.robotium.solo.Solo;
+import com.robotium.solo.Solo;
 
 public class CardListActivityTest extends ActivityInstrumentationTestCase2<CardListActivity> {
 
@@ -189,6 +189,7 @@ public class CardListActivityTest extends ActivityInstrumentationTestCase2<CardL
             t.printStackTrace();
         }
         super.tearDown();
+        solo = null;
     }
 
 }

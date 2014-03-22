@@ -15,7 +15,7 @@ import android.content.Intent;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.LargeTest;
 
-import com.jayway.android.robotium.solo.Solo;
+import com.robotium.solo.Solo;
 
 public class StudyActivityFilterCategoryTest extends ActivityInstrumentationTestCase2<StudyActivity> {
 
@@ -99,5 +99,6 @@ public class StudyActivityFilterCategoryTest extends ActivityInstrumentationTest
             t.printStackTrace();
         }
         super.tearDown();
+        solo = null;
     }
 }

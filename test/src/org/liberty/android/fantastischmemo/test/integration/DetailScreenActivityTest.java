@@ -12,7 +12,7 @@ import android.content.Intent;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.LargeTest;
 
-import com.jayway.android.robotium.solo.Solo;
+import com.robotium.solo.Solo;
 
 public class DetailScreenActivityTest extends ActivityInstrumentationTestCase2<DetailScreen> {
 
@@ -77,6 +77,7 @@ public class DetailScreenActivityTest extends ActivityInstrumentationTestCase2<D
             t.printStackTrace();
         }
         super.tearDown();
+        solo = null;
     }
 
 }

@@ -6,7 +6,7 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.view.KeyEvent;
 
-import com.jayway.android.robotium.solo.Solo;
+import com.robotium.solo.Solo;
 
 public class AnyMemoActivityTabsTest extends ActivityInstrumentationTestCase2<AnyMemo> {
 
@@ -44,5 +44,6 @@ public class AnyMemoActivityTabsTest extends ActivityInstrumentationTestCase2<An
             t.printStackTrace();
         }
         super.tearDown();
+        solo = null;
     }
 }

@@ -15,7 +15,7 @@ import android.test.suitebuilder.annotation.LargeTest;
 import android.view.View;
 import android.widget.EditText;
 
-import com.jayway.android.robotium.solo.Solo;
+import com.robotium.solo.Solo;
 
 public class CardEditorActivityFunctionTest extends ActivityInstrumentationTestCase2<CardEditor> {
 
@@ -91,6 +91,7 @@ public class CardEditorActivityFunctionTest extends ActivityInstrumentationTestC
             t.printStackTrace();
         }
         super.tearDown();
+        solo = null;
     }
 
 }
