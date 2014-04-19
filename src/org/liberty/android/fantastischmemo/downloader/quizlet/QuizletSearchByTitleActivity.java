@@ -1,5 +1,6 @@
 package org.liberty.android.fantastischmemo.downloader.quizlet;
 
+import org.liberty.android.fantastischmemo.AMActivity;
 import org.liberty.android.fantastischmemo.AMPrefKeys;
 import org.liberty.android.fantastischmemo.R;
 
@@ -12,7 +13,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.widget.EditText;
 
-public class QuizletSearchByTitleActivity extends QuizletAccountActivity {
+public class QuizletSearchByTitleActivity extends AMActivity {
     private SharedPreferences settings;
 
     private SharedPreferences.Editor editor;
