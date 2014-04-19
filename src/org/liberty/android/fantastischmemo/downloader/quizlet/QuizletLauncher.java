@@ -60,8 +60,7 @@ public class QuizletLauncher extends AMActivity implements OnClickListener {
             startActivity(intent);
         }
         if (v == searchUserButton) {
-            Intent intent = new Intent(this,
-                    QuizletSearchByUsernameActivity.class);
+            Intent intent = new Intent(this, QuizletSearchByUsernameActivity.class);
             startActivity(intent);
         }
         if (v == userPrivateButton) {

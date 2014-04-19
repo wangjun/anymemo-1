@@ -10,24 +10,26 @@ import android.test.suitebuilder.annotation.LargeTest;
 
 import com.robotium.solo.Solo;
 
-public class PreviewEditActivityMainButtonTest extends ActivityInstrumentationTestCase2<PreviewEditActivity> {
+public class PreviewEditActivityMainButtonTest extends
+        ActivityInstrumentationTestCase2<PreviewEditActivity> {
 
     protected PreviewEditActivity mActivity;
 
     @SuppressWarnings("deprecation")
-    public PreviewEditActivityMainButtonTest () {
+    public PreviewEditActivityMainButtonTest() {
         super("org.liberty.android.fantastischmemo", PreviewEditActivity.class);
     }
 
     private Solo solo;
 
-    public void setUp() throws Exception{
+    public void setUp() throws Exception {
         TestHelper uiTestHelper = new TestHelper(getInstrumentation());
         uiTestHelper.clearPreferences();
         uiTestHelper.setUpFBPDatabase();
 
         Intent intent = new Intent();
-        intent.putExtra(PreviewEditActivity.EXTRA_DBPATH, TestHelper.SAMPLE_DB_PATH);
+        intent.putExtra(PreviewEditActivity.EXTRA_DBPATH,
+                TestHelper.SAMPLE_DB_PATH);
         setActivityIntent(intent);
         mActivity = this.getActivity();
 
@@ -35,7 +37,6 @@ public class PreviewEditActivityMainButtonTest extends ActivityInstrumentationTe
         solo.waitForDialogToClose(8000);
         solo.sleep(600);
     }
-
 
     @LargeTest
     public void testNavigation() throws Exception {
@@ -89,6 +90,102 @@ public class PreviewEditActivityMainButtonTest extends ActivityInstrumentationTe
         solo.clickOnActionBarItem(R.id.save);
         solo.sleep(4000);
         assertTrue(solo.searchText("myhair"));
+    }
+
+    @LargeTest
+    public void testNewAndGoBack() {
+        solo.clickOnText(solo.getString(R.string.add_screen_next));
+        solo.clickOnText(solo.getString(R.string.new_text));
+        solo.waitForActivity("CardEditor");
+        solo.sleep(4000);
+
+        // Make sure to create new card
+        assertTrue(solo.searchText(""));
+        solo.goBack();
+        solo.sleep(4000);
+        assertTrue(solo.searchText("hair"));
+    }
+
+    @LargeTest
+    public void testNewEnterContentAndGoBack() {
+        solo.clickOnText(solo.getString(R.string.add_screen_next));
+        solo.clickOnText(solo.getString(R.string.new_text));
+        solo.waitForActivity("CardEditor");
+        solo.sleep(4000);
+
+        assertTrue(solo.searchText(""));
+        solo.clearEditText(0);
+        solo.enterText(0, "myhair");
+
+        solo.goBack();
+        solo.sleep(4000);
+        assertTrue(solo.searchText("hair"));
+    }
+
+    @LargeTest
+    public void testNewEnterContentSaveAndGoBack() {
+        solo.clickOnText(solo.getString(R.string.add_screen_next));
+        solo.clickOnText(solo.getString(R.string.new_text));
+        solo.waitForActivity("CardEditor");
+        solo.sleep(4000);
+
+        assertTrue(solo.searchText(""));
+        solo.clearEditText(0);
+        solo.enterText(0, "myhair");
+        solo.clickOnActionBarItem(R.id.save);
+
+        solo.goBack();
+        solo.sleep(4000);
+        assertTrue(solo.searchText("myhair"));
+    }
+
+    @LargeTest
+    public void testNewEnterContentSaveEnterContentAndGoBack() {
+        solo.clickOnText(solo.getString(R.string.add_screen_next));
+        solo.clickOnText(solo.getString(R.string.new_text));
+        solo.waitForActivity("CardEditor");
+        solo.sleep(4000);
+
+        assertTrue(solo.searchText(""));
+        solo.clearEditText(0);
+        solo.enterText(0, "myhair");
+        solo.clickOnActionBarItem(R.id.save);
+
+        // Make sure new another card
+        assertTrue(solo.searchText(""));
+        solo.clearEditText(0);
+        solo.enterText(0, "yourhair");
+
+        solo.goBack();
+        solo.sleep(4000);
+
+        // Go back to the last new card
+        assertTrue(solo.searchText("myhair"));
+    }
+
+    @LargeTest
+    public void testNewEnterContentSaveEnterContentSaveAndGoBack() {
+        solo.clickOnText(solo.getString(R.string.add_screen_next));
+        solo.clickOnText(solo.getString(R.string.new_text));
+        solo.waitForActivity("CardEditor");
+        solo.sleep(4000);
+
+        assertTrue(solo.searchText(""));
+        solo.clearEditText(0);
+        solo.enterText(0, "myhair");
+        solo.clickOnActionBarItem(R.id.save);
+
+        // Make sure new another card
+        assertTrue(solo.searchText(""));
+        solo.clearEditText(0);
+        solo.enterText(0, "yourhair");
+        solo.clickOnActionBarItem(R.id.save);
+
+        solo.goBack();
+        solo.sleep(4000);
+
+        // Go back to the last new card
+        assertTrue(solo.searchText("yourhair"));
     }
 
     public void tearDown() throws Exception {

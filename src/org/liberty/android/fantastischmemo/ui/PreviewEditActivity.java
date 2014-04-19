@@ -59,6 +59,7 @@ import android.widget.Toast;
 
 public class PreviewEditActivity extends QACardActivity {
     private final int ACTIVITY_EDIT = 11;
+    private final int ACTIVITY_EDIT_NEW_CARD = 12;
     private final int ACTIVITY_SETTINGS = 15;
     private final int ACTIVITY_LIST = 16;
     private final int ACTIVITY_MERGE = 17;
@@ -210,6 +211,17 @@ public class PreviewEditActivity extends QACardActivity {
                     setCurrentCard(card);
                 }
                 restartActivity();
+                break;
+            }
+
+            case ACTIVITY_EDIT_NEW_CARD:
+            {
+                if(resultCode == Activity.RESULT_OK){
+                    Intent myIntent = new Intent(PreviewEditActivity.this, CardEditor.class);
+                    myIntent.putExtra(CardEditor.EXTRA_DBPATH, dbPath);
+                    myIntent.putExtra(CardEditor.EXTRA_IS_EDIT_NEW, true);
+                    startActivityForResult(myIntent, ACTIVITY_EDIT_NEW_CARD);
+                }
                 break;
             }
 
@@ -677,7 +689,7 @@ public class PreviewEditActivity extends QACardActivity {
                 myIntent.putExtra(CardEditor.EXTRA_CARD_ID, getCurrentCard().getId());
             }
             myIntent.putExtra(CardEditor.EXTRA_IS_EDIT_NEW, true);
-            startActivityForResult(myIntent, ACTIVITY_EDIT);
+            startActivityForResult(myIntent, ACTIVITY_EDIT_NEW_CARD);
         }
     };
 
